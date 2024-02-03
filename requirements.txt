@@ -2,3 +2,5 @@ google-api-python-client==2.94.0
 google-api-core==2.11.1
 openai==1.7.2
 black==23.12.1
+requests~=2.31.0
+deep-translator==1.11.4
