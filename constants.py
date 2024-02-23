@@ -9,9 +9,6 @@ class Prompts:
     SENTENCE_TRANSLATOR = "Translate the following sentence from Spanish to English: {sentence}"
     WORD_TRANSLATOR = "What does the following Spanish word mean in English: '{word}'"
     SYSTEM_MESSAGE = "You are a helpful assistant designed to help a user learn Spanish"
-    # IMAGE_GENERATOR = "generar una imagen relacionada con la palabra {word} en el contexto de la frase {sentence}"
-    # IMAGE_GENERATOR2 = "Genera una imagen de un {word}."
-    IMAGE_GENERATOR = "{sentence}."
 
 
 class URLs:
