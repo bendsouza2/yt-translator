@@ -11,7 +11,6 @@ from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
 
 from constants import Prompts, WORD_LIST_PATH, URLs, LANGUAGE_TO_LEARN, NATIVE_LANGUAGE, ModelTypes, VideoSettings
-import config
 
 
 class WordGenerator:
@@ -62,7 +61,7 @@ class WordGenerator:
 
         query = {"text": word, "language": language_code}
         headers = {
-            "X-RapidAPI-Key": config.rapid_api_key,
+            "X-RapidAPI-Key": os.getenv("rapid_api_key"),
             "X-RapidAPI-Host": URLs.DICTIONARY_HOST,
         }
         response = requests.get(URLs.DICTIONARY_URL, headers=headers, params=query)
@@ -98,7 +97,7 @@ class SentenceGenerator:
 
     def generate_example_sentence(self) -> str:
         """Generate an example sentence demonstrating the context of a given word"""
-        client = OpenAI(api_key=config.openai_key)
+        client = OpenAI(api_key=os.getenv("openai_key"))
         completion = client.chat.completions.create(
             model=ModelTypes.GPT_MODEL,
             messages=[
@@ -114,7 +113,7 @@ class SentenceGenerator:
 
     def translate_example_sentence_gpt(self) -> ChatCompletion:
         """Generate an example sentence demonstrating the context of a given word"""
-        client = OpenAI(api_key=config.openai_key)
+        client = OpenAI(api_key=os.getenv("openai_key"))
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -161,7 +160,7 @@ class ImageGenerator:
         Make a call to DALL-E API
         :param sentence: The prompt for the API to base the image on
         """
-        client = OpenAI(api_key=config.openai_key)
+        client = OpenAI(api_key=os.getenv("openai_key"))
         response = client.images.generate(
             model=ModelTypes.DALLE_MODEL,
             prompt=sentence,
