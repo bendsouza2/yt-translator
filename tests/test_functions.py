@@ -1,3 +1,5 @@
+"""Module for testing the main functionality"""
+
 import unittest
 import os
 from unittest.mock import patch
@@ -11,7 +13,7 @@ class TestWordGenerator(unittest.TestCase):
     def setUpClass(cls):
         cls.mock_get = patch("word_generator.requests.get")
         cls.mock_get.start()
-        cls.word_generator = WordGenerator(os.getcwd() + "/mock/test_word_list.txt")
+        cls.word_generator = WordGenerator(os.getcwd() + "/test_word_list.txt")
 
     @classmethod
     def tearDownClass(cls) -> None:
