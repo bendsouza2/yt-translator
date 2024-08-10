@@ -31,8 +31,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Set PYTHONPATH
-      run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
     - name: Test with pytest
       run: |
         pytest -vvv
