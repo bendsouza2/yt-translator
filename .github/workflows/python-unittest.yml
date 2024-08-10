@@ -16,6 +16,10 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      openai_key: ${{ secrets.OPENAI_KEY }}
+      rapid_api_key: ${{ secrets.RAPID_API_KEY }}
+
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3.10
