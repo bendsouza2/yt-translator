@@ -13,7 +13,7 @@ class TestWordGenerator(unittest.TestCase):
     def setUpClass(cls):
         cls.mock_get = patch("word_generator.requests.get")
         cls.mock_get.start()
-        cls.word_generator = WordGenerator(os.getcwd() + "/test_word_list.txt")
+        cls.word_generator = WordGenerator(os.path.join(os.path.dirname(__file__), "test_word_list.txt"))
 
     @classmethod
     def tearDownClass(cls) -> None:
