@@ -10,7 +10,7 @@ from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
 
-from constants import Prompts, WORD_LIST_PATH, URLs, LANGUAGE_TO_LEARN, NATIVE_LANGUAGE, ModelTypes, VideoSettings
+from constants import Prompts, URLs, LANGUAGE_TO_LEARN, NATIVE_LANGUAGE, ModelTypes, VideoSettings
 
 
 class WordGenerator:
@@ -82,7 +82,7 @@ class WordGenerator:
         while real_word is False:
             word = self.get_random_word()
             real_word = self.test_real_word(word=word)
-            self.remove_word_from_file(file_path=WORD_LIST_PATH, word_to_remove=word)
+            self.remove_word_from_file(file_path=self.file_path, word_to_remove=word)
         return word, real_word
 
 
