@@ -1,5 +1,6 @@
 import random
 from datetime import datetime, timedelta
+from dataclasses import dataclass
 import os
 import re
 
@@ -10,18 +11,53 @@ from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
 
-from constants import Prompts, URLs, LANGUAGE_TO_LEARN, NATIVE_LANGUAGE, ModelTypes, VideoSettings
+from constants import Prompts, URLs, ModelTypes, VideoSettings
+
+
+@dataclass
+class WordGeneratorArgs:
+    """
+    Arguments for initalising a WordGenerator object
+    Attributes:
+        word_list_path (str): The file path to the list of words.
+        language_to_learn (str): The language the user is learning.
+        native_language (str): The native language of the user.
+    """
+    word_list_path: str
+    language_to_learn: str
+    native_language: str
 
 
 class WordGenerator:
+    """
+    Class for generating and verifying words for a given language
+    Attributes:
+        file_path (str): Path to the word list file.
+        text_file (list): Contents of the word list file.
+        trial_word (str): A random word selected from the word list.
+        word (str): A real word determined from the word list.
+        word_is_real (bool): True if the word is a valid word, else False
+    """
 
-    def __init__(self, word_list_path):
-        self.file_path = word_list_path
+    def __init__(
+        self, word_generator_args: WordGeneratorArgs
+    ):
+        """
+        Initialise a WordGenerator object
+        :param word_generator_args:
+        """
+        self.file_path = word_generator_args.word_list_path
+        self.language_to_learn = word_generator_args.language_to_learn
+        self.native_language = word_generator_args.native_language
         self.text_file = self.read_text_file()
         self.trial_word = self.get_random_word()
         self.word, self.word_is_real = self.get_real_word()
 
     def read_text_file(self) -> list:
+        """
+        Read a text file
+        :return: list of lines in the text file
+        """
         with open(self.file_path, "r", encoding="utf-8") as file:
             lines = file.readlines()
         return [line.strip() for line in lines]
@@ -43,23 +79,22 @@ class WordGenerator:
     def get_random_word(self) -> str:
         """
         Choose a random word from the text file
+        :return: a single word from the file
         """
         return random.choice(self.text_file)
 
-    def test_real_word(self, word: str = None, language_code: str = None) -> bool:
+    def test_real_word(self, word: str = None) -> bool:
         """
         Test if a word is genuine by checking it is in the dictionary
         :param word: The word to test
         :param language_code: The language the word should exist in
+        :return True if the word exists in the dictionary, else False
         """
-
-        if language_code is None:
-            language_code = LANGUAGE_TO_LEARN
 
         if word is None:
             word = self.trial_word
 
-        query = {"text": word, "language": language_code}
+        query = {"text": word, "language": self.language_to_learn}
         headers = {
             "X-RapidAPI-Key": os.getenv("rapid_api_key"),
             "X-RapidAPI-Host": URLs.DICTIONARY_HOST,
@@ -86,13 +121,14 @@ class WordGenerator:
         return word, real_word
 
 
-class SentenceGenerator:
-
-    def __init__(self, word: str):
-        self.word = word
+class SentenceGenerator(WordGenerator):
+    def __init__(
+        self, word_generator_args: WordGeneratorArgs
+    ):
+        super().__init__(word_generator_args)
         self.sentence = self.generate_example_sentence()
         self.translated_sentence = self.google_translate(
-            source_language=LANGUAGE_TO_LEARN, target_language=NATIVE_LANGUAGE
+            source_language=self.language_to_learn, target_language=self.native_language
         )
 
     def generate_example_sentence(self) -> str:
@@ -149,7 +185,6 @@ def fix_accented_string(input_string):
 
 
 class ImageGenerator:
-
     def __init__(self, prompts: str | list):
         self.prompts = prompts
         self.image_urls = self.image_generator()
@@ -193,7 +228,7 @@ class ImageGenerator:
             dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
             filepath = os.getcwd() + f"/images/{dt}.jpg"
             img_data = requests.get(url).content
-            with open(filepath, 'wb') as handler:
+            with open(filepath, "wb") as handler:
                 handler.write(img_data)
 
 
@@ -215,10 +250,10 @@ def spanish_syllable_count(word) -> int:
     return count
 
 
-class Audio:
-    def __init__(self, sentence: str):
-        self.sentence = sentence
-        self.audio_path = self.text_to_speech(language=LANGUAGE_TO_LEARN)
+class Audio(SentenceGenerator):
+    def __init__(self, word_generator_args: WordGeneratorArgs):
+        super().__init__(word_generator_args)
+        self.audio_path = self.text_to_speech(language=self.language_to_learn)
         self.audio_duration = self.get_audio_duration()
         self.syllable_count = self.get_total_syllable_count_spanish()
         self.sub_filepath = self.generate_srt_file()
