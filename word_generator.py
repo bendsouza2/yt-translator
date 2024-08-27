@@ -13,6 +13,7 @@ from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
 
 from constants import Prompts, URLs, ModelTypes, VideoSettings
+from utils import spanish_syllable_count
 
 
 class ImageGenerator:
