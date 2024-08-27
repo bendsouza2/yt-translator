@@ -4,16 +4,21 @@ import unittest
 import os
 from unittest.mock import patch
 
-from word_generator import WordGenerator, SentenceGenerator
+from word_generator import Audio
 
 
 class TestWordGenerator(unittest.TestCase):
+    mock_get = None
 
     @classmethod
     def setUpClass(cls):
         cls.mock_get = patch("word_generator.requests.get")
         cls.mock_get.start()
-        cls.word_generator = WordGenerator(os.path.join(os.path.dirname(__file__), "test_word_list.txt"))
+        cls.word_generator = Audio(
+            word_list_path=os.path.join(os.path.dirname(__file__), "test_word_list.txt"),
+            language_to_learn="es",
+            native_language="en"
+        )
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -30,12 +35,12 @@ class TestWordGenerator(unittest.TestCase):
     @patch("word_generator.requests.get")
     def test_test_real_word(self, mock_get):
         mock_get.return_value.json.return_value = {"n_results": 1}
-        self.assertTrue(self.word_generator.test_real_word("apple", "en"))
+        self.assertTrue(self.word_generator.test_real_word("apple"))
 
     @patch("word_generator.requests.get")
     def test_test_real_word_fake(self, mock_get):
         mock_get.return_value.json.return_value = {"n_results": 0}
-        self.assertFalse(self.word_generator.test_real_word("blah", "en"))
+        self.assertFalse(self.word_generator.test_real_word("blah"))
 
 
 if __name__ == "__main__":

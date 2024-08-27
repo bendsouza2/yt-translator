@@ -1,6 +1,7 @@
 import random
 from datetime import datetime, timedelta
-from dataclasses import dataclass
+from typing import List
+from pathlib import Path
 import os
 import re
 
@@ -12,176 +13,6 @@ from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
 
 from constants import Prompts, URLs, ModelTypes, VideoSettings
-
-
-@dataclass
-class WordGeneratorArgs:
-    """
-    Arguments for initalising a WordGenerator object
-    Attributes:
-        word_list_path (str): The file path to the list of words.
-        language_to_learn (str): The language the user is learning.
-        native_language (str): The native language of the user.
-    """
-    word_list_path: str
-    language_to_learn: str
-    native_language: str
-
-
-class WordGenerator:
-    """
-    Class for generating and verifying words for a given language
-    Attributes:
-        file_path (str): Path to the word list file.
-        text_file (list): Contents of the word list file.
-        trial_word (str): A random word selected from the word list.
-        word (str): A real word determined from the word list.
-        word_is_real (bool): True if the word is a valid word, else False
-    """
-
-    def __init__(
-        self, word_generator_args: WordGeneratorArgs
-    ):
-        """
-        Initialise a WordGenerator object
-        :param word_generator_args:
-        """
-        self.file_path = word_generator_args.word_list_path
-        self.language_to_learn = word_generator_args.language_to_learn
-        self.native_language = word_generator_args.native_language
-        self.text_file = self.read_text_file()
-        self.trial_word = self.get_random_word()
-        self.word, self.word_is_real = self.get_real_word()
-
-    def read_text_file(self) -> list:
-        """
-        Read a text file
-        :return: list of lines in the text file
-        """
-        with open(self.file_path, "r", encoding="utf-8") as file:
-            lines = file.readlines()
-        return [line.strip() for line in lines]
-
-    @staticmethod
-    def remove_word_from_file(file_path: str, word_to_remove: str):
-        """Remove a given word from a text file
-        :param file_path: Path to the file
-        :param word_to_remove: The word to remove from the file
-        """
-        with open(file_path, "r", encoding="utf-8") as file:
-            lines = file.readlines()
-
-        lines = [line.strip() for line in lines if line.strip() != word_to_remove]
-
-        with open(file_path, "w", encoding="utf-8") as file:
-            file.write("\n".join(lines))
-
-    def get_random_word(self) -> str:
-        """
-        Choose a random word from the text file
-        :return: a single word from the file
-        """
-        return random.choice(self.text_file)
-
-    def test_real_word(self, word: str = None) -> bool:
-        """
-        Test if a word is genuine by checking it is in the dictionary
-        :param word: The word to test
-        :param language_code: The language the word should exist in
-        :return True if the word exists in the dictionary, else False
-        """
-
-        if word is None:
-            word = self.trial_word
-
-        query = {"text": word, "language": self.language_to_learn}
-        headers = {
-            "X-RapidAPI-Key": os.getenv("rapid_api_key"),
-            "X-RapidAPI-Host": URLs.DICTIONARY_HOST,
-        }
-        response = requests.get(URLs.DICTIONARY_URL, headers=headers, params=query)
-        if response.json()["n_results"] == 0:
-            return False
-        else:
-            return True
-
-    def get_real_word(self) -> tuple[str, bool]:
-        """
-        Generate a random word from the text file and recursively test its existence in the dictionary.
-        Continues to select random words until a genuine word (i.e., found in the dictionary) is obtained.
-
-        :return: A tuple containing the generated word and a boolean indicating whether it is genuine.
-        """
-        word = ""
-        real_word = False
-        while real_word is False:
-            word = self.get_random_word()
-            real_word = self.test_real_word(word=word)
-            self.remove_word_from_file(file_path=self.file_path, word_to_remove=word)
-        return word, real_word
-
-
-class SentenceGenerator(WordGenerator):
-    def __init__(
-        self, word_generator_args: WordGeneratorArgs
-    ):
-        super().__init__(word_generator_args)
-        self.sentence = self.generate_example_sentence()
-        self.translated_sentence = self.google_translate(
-            source_language=self.language_to_learn, target_language=self.native_language
-        )
-
-    def generate_example_sentence(self) -> str:
-        """Generate an example sentence demonstrating the context of a given word"""
-        client = OpenAI(api_key=os.getenv("openai_key"))
-        completion = client.chat.completions.create(
-            model=ModelTypes.GPT_MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": Prompts.SENTENCE_GENERATOR.format(word=self.word),
-                }
-            ],
-        )
-
-        sentence = completion.choices[0].message.content
-        return sentence
-
-    def translate_example_sentence_gpt(self) -> ChatCompletion:
-        """Generate an example sentence demonstrating the context of a given word"""
-        client = OpenAI(api_key=os.getenv("openai_key"))
-        completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "user",
-                    "content": Prompts.SENTENCE_TRANSLATOR.format(
-                        sentence=self.sentence
-                    ),
-                }
-            ],
-        )
-        return completion
-
-    def google_translate(
-        self, target_language: str, source_language: str = None
-    ) -> str:
-        """
-        Translate a sentence into your target language
-        :param target_language: The language you want to translate to
-        :param source_language: The current language of the sentence, if None the translator will attempt to guess the
-        source language
-        """
-        if source_language is None:
-            source_language = "auto"
-        translator = GoogleTranslator(source=source_language, target=target_language)
-        translated_sentence = translator.translate(self.sentence)
-        return translated_sentence
-
-
-def fix_accented_string(input_string):
-    """Not Yet Implemented"""
-    raise NotImplementedError
 
 
 class ImageGenerator:
@@ -232,27 +63,28 @@ class ImageGenerator:
                 handler.write(img_data)
 
 
-def spanish_syllable_count(word) -> int:
-    """
-    Get the number of syllables in a Spanish word
-    :param word: the word to count the syllables of
-    """
-    word = word.lower()
-    vowels = "aeiouyéó"
-    count = 0
-    if word[0] in vowels:
-        count += 1
-    for index in range(1, len(word)):
-        if word[index] in vowels:
-            count += 1
-    if count == 0:
-        count += 1
-    return count
-
-
-class Audio(SentenceGenerator):
-    def __init__(self, word_generator_args: WordGeneratorArgs):
-        super().__init__(word_generator_args)
+class Audio:
+    def __init__(self,
+                 word_list_path: str,
+                 language_to_learn: str,
+                 native_language: str,
+                 ):
+        """
+        Initalise an Audio object
+        :param word_list_path: The file path to the list of words.
+        :param language_to_learn: The language the user is learning.
+        :param native_language: The native language of the user.
+        """
+        self.file_path = word_list_path
+        self.language_to_learn = language_to_learn
+        self.native_language = native_language
+        self.text_file = self.read_text_file()
+        self.trial_word = self.get_random_word()
+        self.word, self.word_is_real = self.get_real_word()
+        self.sentence = self.generate_example_sentence()
+        self.translated_sentence = self.google_translate(
+            source_language=self.language_to_learn, target_language=self.native_language
+        )
         self.audio_path = self.text_to_speech(language=self.language_to_learn)
         self.audio_duration = self.get_audio_duration()
         self.syllable_count = self.get_total_syllable_count_spanish()
@@ -338,3 +170,157 @@ class Audio(SentenceGenerator):
             newfile.write(srt_reformatted)
 
         return srtout
+
+    def read_text_file(self) -> list:
+        """
+        Read a text file
+        :return: list of lines in the text file
+        """
+        with open(self.file_path, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+        return [line.strip() for line in lines]
+
+    @staticmethod
+    def remove_word_from_file(file_path: str, word_to_remove: str):
+        """Remove a given word from a text file
+        :param file_path: Path to the file
+        :param word_to_remove: The word to remove from the file
+        """
+        with open(file_path, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+
+        lines = [line.strip() for line in lines if line.strip() != word_to_remove]
+
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write("\n".join(lines))
+
+    def get_random_word(self) -> str:
+        """
+        Choose a random word from the text file
+        :return: a single word from the file
+        """
+        return random.choice(self.text_file)
+
+    def test_real_word(self, word: str = None) -> bool:
+        """
+        Test if a word is genuine by checking it is in the dictionary
+        :param word: The word to test
+        :param language_code: The language the word should exist in
+        :return True if the word exists in the dictionary, else False
+        """
+
+        if word is None:
+            word = self.trial_word
+
+        query = {"text": word, "language": self.language_to_learn}
+        headers = {
+            "X-RapidAPI-Key": os.getenv("rapid_api_key"),
+            "X-RapidAPI-Host": URLs.DICTIONARY_HOST,
+        }
+        response = requests.get(URLs.DICTIONARY_URL, headers=headers, params=query)
+        if response.json()["n_results"] == 0:
+            return False
+        else:
+            return True
+
+    def get_real_word(self) -> tuple[str, bool]:
+        """
+        Generate a random word from the text file and recursively test its existence in the dictionary.
+        Continues to select random words until a genuine word (i.e., found in the dictionary) is obtained.
+
+        :return: A tuple containing the generated word and a boolean indicating whether it is genuine.
+        """
+        word = ""
+        real_word = False
+        while real_word is False:
+            word = self.get_random_word()
+            real_word = self.test_real_word(word=word)
+            self.remove_word_from_file(file_path=self.file_path, word_to_remove=word)
+        return word, real_word
+
+    def generate_example_sentence(self) -> str:
+        """Generate an example sentence demonstrating the context of a given word"""
+        client = OpenAI(api_key=os.getenv("openai_key"))
+        completion = client.chat.completions.create(
+            model=ModelTypes.GPT_MODEL,
+            messages=[
+                {
+                    "role": "user",
+                    "content": Prompts.SENTENCE_GENERATOR.format(word=self.word),
+                }
+            ],
+        )
+
+        sentence = completion.choices[0].message.content
+        return sentence
+
+    def translate_example_sentence_gpt(self) -> ChatCompletion:
+        """Generate an example sentence demonstrating the context of a given word"""
+        client = OpenAI(api_key=os.getenv("openai_key"))
+        completion = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "user",
+                    "content": Prompts.SENTENCE_TRANSLATOR.format(
+                        sentence=self.sentence
+                    ),
+                }
+            ],
+        )
+        return completion
+
+    def google_translate(
+        self, target_language: str, source_language: str = None
+    ) -> str:
+        """
+        Translate a sentence into your target language
+        :param target_language: The language you want to translate to
+        :param source_language: The current language of the sentence, if None the translator will attempt to guess the
+        source language
+        """
+        if source_language is None:
+            source_language = "auto"
+        translator = GoogleTranslator(source=source_language, target=target_language)
+        translated_sentence = translator.translate(self.sentence)
+        return translated_sentence
+
+
+class VideoGenerator:
+
+    def __init__(self,
+                 word: str,
+                 sentences: List[str],
+                 local_image_storage: bool = False,
+                 image_path: str = None
+                 ):
+        self.word = word
+        self.sentences = sentences
+        self.local_image_storage = local_image_storage
+        self.image_path = image_path
+        self._check_valid_image_path()
+
+    @property
+    def image_path(self):
+        return self._image_path
+
+    @image_path.setter
+    def image_path(self, image_path: str):
+        if image_path is not None:
+            self._image_path = image_path
+        elif self.local_image_storage is True and image_path is None:
+            dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
+            file_name = os.path.join(os.path.dirname(__file__), f"images/{dt},jpg")
+            self._image_path = file_name
+        elif self.local_image_storage is False and image_path is None:
+            pass
+
+    def _check_valid_image_path(self):
+        if self.local_image_storage is True:
+            file_path = Path(self.image_path)
+            if not file_path.is_file():
+                raise ValueError(f"Either the image path you provided could not be located, or an image could not be "
+                                 f"found in the default path location. Try specifying the image_path arg")
+        elif self.local_image_storage is False:
+            pass
+
