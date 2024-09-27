@@ -1,3 +1,4 @@
-# yt-translator
+# YT-Translator
 
-overview
+###Setup
+1. Run 
