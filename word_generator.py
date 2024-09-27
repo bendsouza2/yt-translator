@@ -1,6 +1,6 @@
 import random
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 import os
 import re
@@ -17,7 +17,23 @@ from utils import spanish_syllable_count
 
 
 class ImageGenerator:
-    def __init__(self, prompts: str | list):
+    """
+    Can be used to generate and store images
+    """
+    def __init__(
+            self,
+            prompts: str | list,
+            local_image_storage: Optional[bool] = True,
+            local_file_path: Optional[str] = None,
+            s3_file_path: Optional[str] = None,
+    ):
+        """
+        Iniatalise an object of the ImageGenerator class
+        :param prompts: The prompts to use to create the image
+        :param local_image_storage: Optional. Whether to store the image locally or remotely. Defaults to True
+        :param local_file_path: Optional. The file path if storing the file locally
+        :param s3_file_path: Optional. The file path if storing the file in S3
+        """
         self.prompts = prompts
         self.image_urls = self.image_generator()
         self.save_image()
@@ -50,7 +66,7 @@ class ImageGenerator:
             images = [self.call_dalle(prompt) for prompt in self.prompts]
             return images
         else:
-            raise TypeError("prompts argument must be either string or list")
+            raise TypeError(f"prompts argument must be either string or list, got type {type(self.prompts)}")
 
     def save_image(self):
         """
@@ -62,6 +78,12 @@ class ImageGenerator:
             img_data = requests.get(url).content
             with open(filepath, "wb") as handler:
                 handler.write(img_data)
+
+    def save_image_to_s3(self):
+        """
+        Save images to S3
+        """
+        raise NotImplementedError
 
 
 class Audio:
@@ -200,6 +222,8 @@ class Audio:
         Choose a random word from the text file
         :return: a single word from the file
         """
+        if len(self.text_file) == 0:
+            raise ValueError("The text file is empty or does not exist. No content could be read from file")
         return random.choice(self.text_file)
 
     def test_real_word(self, word: str = None) -> bool:

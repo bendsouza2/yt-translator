@@ -9,3 +9,7 @@ moviepy~=1.0.3
 scipy==1.12.0
 numpy==1.26.3
 soundfile==0.12.1
+boto3==1.35.7
+fastapi==0.114.0
+pydantic~=2.5.3
+botocore==1.35.7
