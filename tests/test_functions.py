@@ -16,8 +16,15 @@ class TestWordGenerator(unittest.TestCase):
     def setUpClass(cls):
         cls.mock_get = patch("word_generator.requests.get").start()
         cls.mock_google_translator = patch("word_generator.GoogleTranslator").start()
+        cls.mock_remove_word_from_file = patch("word_generator.Audio.remove_word_from_file").start()
+
+        # can remove mock attributes for these 5 methods once I write unit tests to test them in controlled env
         cls.mock_srt_file = patch("word_generator.Audio.generate_srt_file").start()
         cls.mock_tts = patch("word_generator.Audio.text_to_speech").start()
+        cls.mock_get_audio_duration = patch("word_generator.Audio.get_audio_duration").start()
+        cls.mock_get_total_syllable_count = patch("word_generator.Audio.get_total_syllable_count_spanish").start()
+        cls.mock_generate_srt_file = patch("word_generator.Audio.generate_srt_file").start()
+
         cls.mock_google_translator.return_value.translate.return_value = "Translated sentence"
         cls.audio = Audio(
             word_list_path=os.path.join(os.path.dirname(__file__), "test_word_list.txt"),
