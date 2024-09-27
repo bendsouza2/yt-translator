@@ -11,9 +11,66 @@ from soundfile import SoundFile
 from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
+import spacy
+import enchant
 
 from constants import Prompts, URLs, ModelTypes, VideoSettings
 from utils import spanish_syllable_count
+
+
+class LanguageVerification:
+    """
+    Used to verify language
+    """
+
+    def __init__(
+            self,
+            language: str,
+    ):
+        self.language = language
+
+    def lexical_test_real_word(self, word: str) -> bool:
+        """
+        Test if a word is genuine by checking it is in the dictionary
+        :param word: The word to test
+        :param language_code: The language the word should exist in
+        :return True if the word exists in the dictionary, else False
+        """
+
+        query = {"text": word, "language": self.language}
+        headers = {
+            "X-RapidAPI-Key": os.getenv("rapid_api_key"),
+            "X-RapidAPI-Host": URLs.DICTIONARY_HOST,
+        }
+        response = requests.get(URLs.DICTIONARY_URL, headers=headers, params=query)
+        if response.json()["n_results"] == 0:
+            return False
+        else:
+            return True
+
+    def spacy_real_word(self, model: str, word: str) -> bool:
+        """
+        Test a word is real using Spacy. For more info see https://spacy.io/
+        :param model: The model to use to help identify the word
+        :param word: The word to test
+        :return: True if the word exists for the given language, False if not
+        """
+
+        if model is None:
+            model = "es_core_news_sm"
+
+        language = spacy.load(model)
+        doc = language(word)
+        return doc[0].is_alpha and not doc[0].is_stop
+
+    def enchant_real_word(self, word: str) -> bool:
+        """
+        Test a word is real using enchant. For more info see https://pyenchant.github.io/pyenchant/install.html
+        :param word: The word to test
+        :return: True if the word exists for the given language, False if not
+        """
+        thesaurus = enchant.Dict(self.language)
+        return thesaurus.check(word)
 
 
 class ImageGenerator:
@@ -111,7 +168,7 @@ class Audio:
         self.audio_path = self.text_to_speech(language=self.language_to_learn)
         self.audio_duration = self.get_audio_duration()
         self.syllable_count = self.get_total_syllable_count_spanish()
-        self.sub_filepath = self.generate_srt_file()
+        # self.sub_filepath = self.generate_srt_file()
 
     def text_to_speech(self, language: str, filepath: str = None) -> str:
         """
@@ -257,9 +314,10 @@ class Audio:
         """
         word = ""
         real_word = False
+
         while real_word is False:
             word = self.get_random_word()
-            real_word = self.test_real_word(word=word)
+            real_word = LanguageVerification(self.language_to_learn).enchant_real_word(word)
             self.remove_word_from_file(file_path=self.file_path, word_to_remove=word)
         return word, real_word
 
