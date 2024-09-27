@@ -1,6 +1,6 @@
 # YT-Translator
 
-###Setup
+### Setup
 1. Install the requirements to your venv `pip install -r requirements.txt`
 2. To be able to import enchant in python we'll need to install the Enchant C library (on Mac)
 	* Run `brew install enchant`
