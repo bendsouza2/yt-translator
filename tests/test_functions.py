@@ -10,12 +10,14 @@ from word_generator import Audio
 class TestWordGenerator(unittest.TestCase):
     mock_get = None
     mock_google_translator = None
+    mock_tts = None
 
     @classmethod
     def setUpClass(cls):
         cls.mock_get = patch("word_generator.requests.get").start()
         cls.mock_google_translator = patch("word_generator.GoogleTranslator").start()
         cls.mock_srt_file = patch("word_generator.Audio.generate_srt_file").start()
+        cls.mock_tts = patch("word_generator.Audio.text_to_speech").start()
         cls.mock_google_translator.return_value.translate.return_value = "Translated sentence"
         cls.audio = Audio(
             word_list_path=os.path.join(os.path.dirname(__file__), "test_word_list.txt"),
@@ -27,6 +29,7 @@ class TestWordGenerator(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.mock_get.stop()
         cls.mock_google_translator.stop()
+        cls.mock_tts.stop()
 
     def test_read_text_file(self):
         expected_text = ["apple", "banana", "orange"]
