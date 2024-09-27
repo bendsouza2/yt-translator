@@ -7,4 +7,6 @@
 	* Configure the environment variables by opening the shell config file (~/.bashrc or ~/.zshrc) and adding the lines:
 	 `export DYLD_LIBRARY_PATH="<PATH_TO_ENCHANT_INSTALL>:$DYLD_LIBRARY_PATH"
 	 export ENCHANT_LIBRARY_PATH="<PATH_TO_ENCHANT_INSTALL>"`
+3. Configure environment variables:
+	* OPENAI_API_KEY = <YOUR_API_KEY>
 
