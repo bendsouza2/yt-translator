@@ -17,8 +17,8 @@ import enchant
 from aeneas.executetask import ExecuteTask
 from aeneas.task import Task
 
-from constants import Prompts, URLs, ModelTypes, VideoSettings, Paths
-from utils import spanish_syllable_count
+from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths
+from python.utils import spanish_syllable_count
 
 
 class LanguageVerification:
