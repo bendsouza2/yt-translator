@@ -4,7 +4,7 @@ import unittest
 import os
 from unittest.mock import patch
 
-from python.word_generator import Audio
+from word_generator import Audio
 
 
 class TestWordGenerator(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestWordGenerator(unittest.TestCase):
         cls.mock_tts = patch("word_generator.Audio.text_to_speech").start()
         cls.mock_get_audio_duration = patch("word_generator.Audio.get_audio_duration").start()
         cls.mock_get_total_syllable_count = patch("word_generator.Audio.get_total_syllable_count_spanish").start()
-        cls.mock_generate_srt_file = patch("word_generator.Audio.generate_srt_file").start()
+        cls.mock_generate_srt_file = patch("word_generator.Audio.echogarden_generate_subtitles").start()
 
         cls.mock_google_translator.return_value.translate.return_value = "Translated sentence"
         cls.audio = Audio(
