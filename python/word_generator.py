@@ -4,6 +4,7 @@ from typing import List, Optional
 from pathlib import Path
 import os
 import re
+import subprocess
 
 import requests
 from gtts import gTTS
@@ -11,9 +12,66 @@ from soundfile import SoundFile
 from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
+import spacy
+import enchant
 
-from constants import Prompts, URLs, ModelTypes, VideoSettings
-from utils import spanish_syllable_count
+from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths
+from python.utils import spanish_syllable_count
+
+
+class LanguageVerification:
+    """
+    Used to verify language
+    """
+
+    def __init__(
+            self,
+            language: str,
+    ):
+        self.language = language
+
+    def lexical_test_real_word(self, word: str) -> bool:
+        """
+        Test if a word is genuine by checking it is in the dictionary
+        :param word: The word to test
+        :param language_code: The language the word should exist in
+        :return True if the word exists in the dictionary, else False
+        """
+
+        query = {"text": word, "language": self.language}
+        headers = {
+            "X-RapidAPI-Key": os.getenv("rapid_api_key"),
+            "X-RapidAPI-Host": URLs.DICTIONARY_HOST,
+        }
+        response = requests.get(URLs.DICTIONARY_URL, headers=headers, params=query)
+        if response.json()["n_results"] == 0:
+            return False
+        else:
+            return True
+
+    def spacy_real_word(self, model: str, word: str) -> bool:
+        """
+        Test a word is real using Spacy. For more info see https://spacy.io/
+        :param model: The model to use to help identify the word
+        :param word: The word to test
+        :return: True if the word exists for the given language, False if not
+        """
+
+        if model is None:
+            model = "es_core_news_sm"
+
+        language = spacy.load(model)
+        doc = language(word)
+        return doc[0].is_alpha and not doc[0].is_stop
+
+    def enchant_real_word(self, word: str) -> bool:
+        """
+        Test a word is real using enchant. For more info see https://pyenchant.github.io/pyenchant/install.html
+        :param word: The word to test
+        :return: True if the word exists for the given language, False if not
+        """
+        thesaurus = enchant.Dict(self.language)
+        return thesaurus.check(word)
 
 
 class ImageGenerator:
@@ -111,7 +169,7 @@ class Audio:
         self.audio_path = self.text_to_speech(language=self.language_to_learn)
         self.audio_duration = self.get_audio_duration()
         self.syllable_count = self.get_total_syllable_count_spanish()
-        self.sub_filepath = self.generate_srt_file()
+        self.sub_filepath = self.echogarden_generate_subtitles(sentence=self.sentence)
 
     def text_to_speech(self, language: str, filepath: str = None) -> str:
         """
@@ -171,7 +229,9 @@ class Audio:
                 phrase = [word]
                 phrase_time = syllable_count * syllables_per_second
 
-            if index == len(words) - 1 and phrases[-1] != phrase:
+            if index == len(words) - 1 and len(phrases) == 0:
+                phrases.append(phrase)
+            elif index == len(words) - 1 and phrases[-1] != phrase:
                 phrases.append(phrase)
 
         splits = len(phrases)
@@ -188,11 +248,28 @@ class Audio:
         repl = "0\\1"
         srt_reformatted = re.sub(pat, repl, srt, 0, re.MULTILINE)
 
-        srtout = os.path.join(os.path.dirname(__file__), "/subtitles.srt")
+        srtout = os.path.join(os.path.dirname(__file__), "subtitles.srt")
         with open(srtout, "w") as newfile:
             newfile.write(srt_reformatted)
 
         return srtout
+
+    def echogarden_generate_subtitles(self, sentence: str) -> str:
+        """
+        Use the node.js package echogarden to sync an audio file with the text spoken in that audio file
+        :param sentence: The text to match to the audio file
+        :return: The output_file_path that the .srt file was written to if successfully generated, else None
+        """
+        dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
+        output_file_path = f"{Paths.SUBTITLE_DIR_PATH}/{dt}.srt"
+        command = ["node", "sync_subtitles.js", self.audio_path, sentence, output_file_path]
+        try:
+            result = subprocess.run(command, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as e:
+            raise subprocess.CalledProcessError(f"Command failed with exit code {e.returncode}. stderr {e.stderr}")
+
+        if result:
+            return output_file_path
 
     def read_text_file(self) -> list:
         """
@@ -257,9 +334,10 @@ class Audio:
         """
         word = ""
         real_word = False
+
         while real_word is False:
             word = self.get_random_word()
-            real_word = self.test_real_word(word=word)
+            real_word = LanguageVerification(self.language_to_learn).enchant_real_word(word)
             self.remove_word_from_file(file_path=self.file_path, word_to_remove=word)
         return word, real_word
 

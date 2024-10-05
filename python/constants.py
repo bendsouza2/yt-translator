@@ -31,4 +31,7 @@ class VideoSettings:
     IMAGE_SIZE = "1024x1024"
 
 
-WORD_LIST_PATH = os.getcwd() + "/top-10000-spanish-words.txt"
+class Paths:
+    WORD_LIST_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/top-10000-spanish-words.txt"
+    SUBTITLE_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/subtitles"
+    AUDIO_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/audio"

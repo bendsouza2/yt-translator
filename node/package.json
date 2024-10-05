@@ -1,0 +1,19 @@
+{
+  "name": "yt_translator",
+  "version": "1.0.0",
+  "description": "### Setup 1. Install the requirements to your venv `pip install -r requirements.txt` 2. To be able to import enchant in python we'll need to install the Enchant C library (on Mac) \t* Run `brew install enchant` \t* Configure the environment variables by opening the shell config file (~/.bashrc or ~/.zshrc) and adding the lines: \t `export DYLD_LIBRARY_PATH=\"<PATH_TO_ENCHANT_INSTALL>:$DYLD_LIBRARY_PATH\" \t export ENCHANT_LIBRARY_PATH=\"<PATH_TO_ENCHANT_INSTALL>\"` 3. Configure environment variables: \t* OPENAI_API_KEY = <YOUR_API_KEY>",
+  "main": "index.js",
+  "type": "module",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "echogarden": "^1.5.0"
+  }
+}
