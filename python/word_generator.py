@@ -17,7 +17,7 @@ import enchant
 from aeneas.executetask import ExecuteTask
 from aeneas.task import Task
 
-from constants import Prompts, URLs, ModelTypes, VideoSettings
+from constants import Prompts, URLs, ModelTypes, VideoSettings, Paths
 from utils import spanish_syllable_count
 
 
@@ -171,7 +171,7 @@ class Audio:
         self.audio_path = self.text_to_speech(language=self.language_to_learn)
         self.audio_duration = self.get_audio_duration()
         self.syllable_count = self.get_total_syllable_count_spanish()
-        # self.sub_filepath = self.generate_srt_file()
+        self.sub_filepath = self.echogarden_generate_subtitles(sentence=self.sentence)
 
     def text_to_speech(self, language: str, filepath: str = None) -> str:
         """
@@ -256,7 +256,13 @@ class Audio:
 
         return srtout
 
-    def aeaneas_generate_subtitles(self, sentence: str, file_format: str = "srt"):
+    def aeneas_generate_subtitles(self, sentence: str, file_format: str = "srt"):
+        """
+        Use aeneas to generate a .srt file
+        :param sentence:
+        :param file_format:
+        :return:
+        """
 
         language_map = {
             "en": "eng",
@@ -277,13 +283,22 @@ class Audio:
         ExecuteTask(task).execute()
         task.output_sync_map_file()
 
-    def echogarden_generate_subtitles(self):
+    def echogarden_generate_subtitles(self, sentence: str) -> str:
+        """
+        Use the node.js package echogarden to sync an audio file with the text spoken in that audio file
+        :param sentence: The text to match to the audio file
+        :return: The output_file_path that the .srt file was written to if successfully generated, else None
+        """
         dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-        output_file_path = os.getcwd() + f"/subtitles/{dt}.wav"
-        command = ["node", "sync_subtitles.js", self.audio_path, self.sentence, output_file_path]
-        result = subprocess.run(command, check=True, capture_output=True, text=True)
-        print(result.stdout)
-        print(result.stderr)
+        output_file_path = f"{Paths.SUBTITLE_DIR_PATH}/{dt}.srt"
+        command = ["node", "sync_subtitles.js", self.audio_path, sentence, output_file_path]
+        try:
+            result = subprocess.run(command, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as e:
+            raise subprocess.CalledProcessError(f"Command failed with exit code {e.returncode}. stderr {e.stderr}")
+
+        if result:
+            return output_file_path
 
     def read_text_file(self) -> list:
         """

@@ -4,7 +4,7 @@ import unittest
 import os
 from unittest.mock import patch
 
-from word_generator import Audio
+from python.word_generator import Audio
 
 
 class TestWordGenerator(unittest.TestCase):
