@@ -17,6 +17,7 @@ class TestWordGenerator(unittest.TestCase):
         cls.mock_get = patch("python.word_generator.requests.get").start()
         cls.mock_google_translator = patch("python.word_generator.GoogleTranslator").start()
         cls.mock_remove_word_from_file = patch("python.word_generator.Audio.remove_word_from_file").start()
+        cls.mock_enchant = patch("python.word_generator.LanguageVerification.enchant_real_word").start()
 
         # can remove mock attributes for these 5 methods once I write unit tests to test them in controlled env
         cls.mock_srt_file = patch("python.word_generator.Audio.generate_srt_file").start()
@@ -36,7 +37,14 @@ class TestWordGenerator(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.mock_get.stop()
         cls.mock_google_translator.stop()
+        cls.mock_remove_word_from_file.stop()
+        cls.mock_enchant.stop()
+
+        cls.mock_srt_file.stop()
         cls.mock_tts.stop()
+        cls.mock_get_audio_duration()
+        cls.mock_get_total_syllable_count.stop()
+        cls.mock_generate_srt_file.stop()
 
     def test_read_text_file(self):
         expected_text = ["apple", "banana", "orange"]
