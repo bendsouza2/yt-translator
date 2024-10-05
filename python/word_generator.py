@@ -14,8 +14,6 @@ from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
 import spacy
 import enchant
-from aeneas.executetask import ExecuteTask
-from aeneas.task import Task
 
 from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths
 from python.utils import spanish_syllable_count
@@ -255,33 +253,6 @@ class Audio:
             newfile.write(srt_reformatted)
 
         return srtout
-
-    def aeneas_generate_subtitles(self, sentence: str, file_format: str = "srt"):
-        """
-        Use aeneas to generate a .srt file
-        :param sentence:
-        :param file_format:
-        :return:
-        """
-
-        language_map = {
-            "en": "eng",
-            "fr": "fra",
-            "es": "spa",
-            "de": "deu",
-            "cn": "zho",
-            "jp": "jpn",
-        }
-        language = language_map[self.language_to_learn]
-        config_string = f"task_language={language} | os_task_file_format={file_format}"
-        task = Task(config_string=config_string)
-        task.audio_file_path_absolute = self.audio_path
-        task.text_file_plain = sentence
-        output_file = os.path.join(os.path.dirname(__file__), "subtitles.srt")
-        task.output_file_path_absolute = output_file
-
-        ExecuteTask(task).execute()
-        task.output_sync_map_file()
 
     def echogarden_generate_subtitles(self, sentence: str) -> str:
         """
