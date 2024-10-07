@@ -171,11 +171,11 @@ class Audio:
         self.syllable_count = self.get_total_syllable_count_spanish()
         self.sub_filepath = self.echogarden_generate_subtitles(sentence=self.sentence)
 
-    def text_to_speech(self, language: str, filepath: str = None) -> str:
+    def text_to_speech(self, language: str, filepath: Optional[str] = None) -> str:
         """
         Generate an audio file
         :param language: The language that the audio should be generated in
-        :param filepath: The filepath to save the resulting .mp3 file to
+        :param filepath: Optional, the filepath to save the resulting .mp3 file to
         """
         if filepath is None:
             dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
@@ -218,7 +218,7 @@ class Audio:
         words = self.sentence.split(" ")
         phrases = []
         phrase = []
-        phrase_time = 0
+        phrase_time = 0.0
         for index, word in enumerate(words):
             syllable_count = spanish_syllable_count(word)
             phrase_time += syllable_count * syllables_per_second
@@ -266,10 +266,11 @@ class Audio:
         try:
             result = subprocess.run(command, check=True, capture_output=True, text=True)
         except subprocess.CalledProcessError as e:
-            raise subprocess.CalledProcessError(f"Command failed with exit code {e.returncode}. stderr {e.stderr}")
+            raise subprocess.CalledProcessError(
+                e.returncode, e.cmd, stderr=f"Command failed with exit code {e.returncode}. stderr {e.stderr}"
+            )
 
-        if result:
-            return output_file_path
+        return output_file_path
 
     def read_text_file(self) -> list:
         """
@@ -303,7 +304,7 @@ class Audio:
             raise ValueError("The text file is empty or does not exist. No content could be read from file")
         return random.choice(self.text_file)
 
-    def test_real_word(self, word: str = None) -> bool:
+    def test_real_word(self, word: Optional[str] = None) -> bool:
         """
         Test if a word is genuine by checking it is in the dictionary
         :param word: The word to test
@@ -355,7 +356,7 @@ class Audio:
         )
 
         sentence = completion.choices[0].message.content
-        return sentence
+        return sentence  # type: ignore
 
     def translate_example_sentence_gpt(self) -> ChatCompletion:
         """Generate an example sentence demonstrating the context of a given word"""
@@ -374,7 +375,7 @@ class Audio:
         return completion
 
     def google_translate(
-        self, target_language: str, source_language: str = None
+        self, target_language: str, source_language: Optional[str] = None
     ) -> str:
         """
         Translate a sentence into your target language
@@ -395,7 +396,7 @@ class VideoGenerator:
                  word: str,
                  sentences: List[str],
                  local_image_storage: bool = False,
-                 image_path: str = None
+                 image_path: Optional[str] = None
                  ):
         self.word = word
         self.sentences = sentences
