@@ -1,6 +1,7 @@
 """Module for storing constants for the project"""
 import os
 from dataclasses import dataclass
+from typing import Literal
 
 LANGUAGE_TO_LEARN = "es"
 NATIVE_LANGUAGE = "en"
@@ -28,7 +29,7 @@ class ModelTypes:
 
 @dataclass
 class VideoSettings:
-    IMAGE_SIZE = "1024x1024"
+    IMAGE_SIZE: Literal["1024x1024"] = "1024x1024"
 
 
 class Paths:

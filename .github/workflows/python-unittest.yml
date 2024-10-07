@@ -34,3 +34,6 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -vvv
+    - name: type check with mypy
+      run: |
+        mypy -v .
