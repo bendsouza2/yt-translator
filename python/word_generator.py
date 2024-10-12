@@ -34,7 +34,6 @@ class LanguageVerification:
         """
         Test if a word is genuine by checking it is in the dictionary
         :param word: The word to test
-        :param language_code: The language the word should exist in
         :return True if the word exists in the dictionary, else False
         """
 
