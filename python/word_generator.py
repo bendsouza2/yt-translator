@@ -34,7 +34,6 @@ class LanguageVerification:
         """
         Test if a word is genuine by checking it is in the dictionary
         :param word: The word to test
-        :param language_code: The language the word should exist in
         :return True if the word exists in the dictionary, else False
         """
 
@@ -86,7 +85,7 @@ class ImageGenerator:
             s3_file_path: Optional[str] = None,
     ):
         """
-        Iniatalise an object of the ImageGenerator class
+        Initialise an object of the ImageGenerator class
         :param prompts: The prompts to use to create the image
         :param local_image_storage: Optional. Whether to store the image locally or remotely. Defaults to True
         :param local_file_path: Optional. The file path if storing the file locally
@@ -151,7 +150,7 @@ class Audio:
                  native_language: str,
                  ):
         """
-        Initalise an Audio object
+        Initialise an Audio object
         :param word_list_path: The file path to the list of words.
         :param language_to_learn: The language the user is learning.
         :param native_language: The native language of the user.
