@@ -13,9 +13,9 @@ The project is currently still in development and is not yet in mainenance mode.
 	 	* `export DYLD_LIBRARY_PATH="<PATH_TO_ENCHANT_INSTALL>:$DYLD_LIBRARY_PATH"`
 	 	* `export ENCHANT_LIBRARY_PATH="<PATH_TO_ENCHANT_INSTALL>"`
 3. Configure environment variables:
-	* OPENAI_API_KEY = <YOUR_API_KEY>
+	* `OPENAI_API_KEY = <YOUR_API_KEY>`
 4. Run `npm install` to install the Node.js dependencies (echogarden)
 5. In the constants.py file:
 	* Set the LANGUAGE_TO_LEARN variable to the language you want to publish language learning videos for: e.g. `LANGUAGE_TO_LEARN = "es`
-	* Set the NATIVE_LANGUAGE variable to the language which should be used as a base language to learn the secondary language from: e.g. `NATIVE_LANGUAGE = "en`
+	* Set the NATIVE_LANGUAGE variable to the language which should be used as a base language to learn the secondary language from: e.g. `NATIVE_LANGUAGE = "en"`
 
