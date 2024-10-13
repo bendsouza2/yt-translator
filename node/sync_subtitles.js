@@ -54,7 +54,10 @@ async function synchronizeSubtitles(audioPath, subtitleText, outputFilePath) {
             srtContent += `${subtitleIndex++}\n${startTime} --> ${endTime}\n${chunkText}\n\n`;
         }
 
-        fs.writeFileSync(outputFilePath, srtContent.trim());
+        srtContent = srtContent.trim()
+        srtContent += '\n\n'
+
+        fs.writeFileSync(outputFilePath, srtContent);
         console.log(`Subtitles synchronized and saved to ${outputFilePath}`);
     } catch (error) {
         console.error('Error synchronizing subtitles:', error);
