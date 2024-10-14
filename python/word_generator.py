@@ -1,6 +1,6 @@
 import random
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from pathlib import Path
 import os
 import re
@@ -12,6 +12,8 @@ from soundfile import SoundFile
 from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
+from moviepy.editor import *
+from moviepy.video.tools.subtitles import SubtitlesClip
 import spacy
 import enchant
 
@@ -28,6 +30,10 @@ class LanguageVerification:
             self,
             language: str,
     ):
+        """
+        Initialise a LanguageVerification object
+        :param language: the language you want to verify a word for
+        """
         self.language = language
 
     def lexical_test_real_word(self, word: str) -> bool:
@@ -57,7 +63,7 @@ class LanguageVerification:
         """
 
         if model is None:
-            model = "es_core_news_sm"
+            model = f"{self.language}_core_news_sm"
 
         language = spacy.load(model)
         doc = language(word)
@@ -93,7 +99,9 @@ class ImageGenerator:
         """
         self.prompts = prompts
         self.image_urls = self.image_generator()
-        self.save_image()
+        self.image_paths = self.save_image()
+        self.local_image_storage = local_image_storage
+        self._check_valid_image_path()
 
     def call_dalle(self, sentence: str):
         """
@@ -104,7 +112,7 @@ class ImageGenerator:
         response = client.images.generate(
             model=ModelTypes.DALLE_MODEL,
             prompt=sentence,
-            size=VideoSettings.IMAGE_SIZE,
+            size=VideoSettings.VERTICAL,
             quality="standard",
             n=1,
         )
@@ -129,18 +137,34 @@ class ImageGenerator:
         """
         Save images to local directory
         """
+        filepaths = []
         for url in self.image_urls:
             dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-            filepath = os.getcwd() + f"/images/{dt}.jpg"
+            output_file_path = f"{Paths.IMAGE_DIR_PATH}/{dt}.jpg"
             img_data = requests.get(url).content
-            with open(filepath, "wb") as handler:
+            with open(output_file_path, "wb") as handler:
                 handler.write(img_data)
+            filepaths.append(output_file_path)
+        return filepaths
 
     def save_image_to_s3(self):
         """
         Save images to S3
         """
         raise NotImplementedError
+
+    def _check_valid_image_path(self):
+        """
+        Check the image is saved to a valid location
+        """
+        if self.local_image_storage is True:
+            for local_image_path in self.image_paths:
+                file_path = Path(local_image_path)
+                if not file_path.is_file():
+                    raise ValueError(f"Either the image path you provided could not be located, or an image could not "
+                                     f"be found in the default path location.")
+        elif self.local_image_storage is False:
+            raise NotImplementedError
 
 
 class Audio:
@@ -178,7 +202,7 @@ class Audio:
         """
         if filepath is None:
             dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-            filepath = os.getcwd() + f"/audio/{dt}.wav"
+            filepath = f"{Paths.AUDIO_DIR_PATH}/{dt}.wav"
         tts = gTTS(self.sentence, lang=language)
         tts.save(filepath)
         return filepath
@@ -261,7 +285,7 @@ class Audio:
         """
         dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
         output_file_path = f"{Paths.SUBTITLE_DIR_PATH}/{dt}.srt"
-        command = ["node", "sync_subtitles.js", self.audio_path, sentence, output_file_path]
+        command = ["node", Paths.NODE_SUBS_FILE_PATH, self.audio_path, sentence, output_file_path]
         try:
             result = subprocess.run(command, check=True, capture_output=True, text=True)
         except subprocess.CalledProcessError as e:
@@ -390,40 +414,93 @@ class Audio:
 
 
 class VideoGenerator:
+    """Class for generating videos"""
 
     def __init__(self,
                  word: str,
-                 sentences: List[str],
+                 sentence: str,
+                 translated_sentence: str,
+                 image_paths: List[str],
+                 audio_filepath: str,
+                 subtitles_filepath: str,
                  local_image_storage: bool = False,
-                 image_path: Optional[str] = None
                  ):
+        """
+        Initialise a VideoGenerator object
+        :param word: the key word from the sentence
+        :param sentence: the sentence to display subtitles for
+        :param translated_sentence: the sentence translated to the native language
+        :param image_paths: a list of paths to images to use in the video
+        :param audio_filepath: the path to the audio file
+        :param subtitles_filepath: the path to the subtitles
+        :param local_image_storage: True if the images are stored locally, False otherwise
+        """
         self.word = word
-        self.sentences = sentences
+        self.sentence = sentence
+        self.translated_sentence = translated_sentence
+        self.image_paths = image_paths
+        self.audio_filepath = audio_filepath
+        self.subtitles_filepath = subtitles_filepath
         self.local_image_storage = local_image_storage
-        self.image_path = image_path
-        self._check_valid_image_path()
 
-    @property
-    def image_path(self):
-        return self._image_path
+    @staticmethod
+    def create_subtitle_clip(
+            text: str,
+            font_size: int = 50,
+            colour: str = "white",
+            background_opacity: float = 0.7,
+            text_pos: Tuple[int | float | str] = ("center", "center")
+    ) -> CompositeVideoClip:
+        """
+        Create subtitles for given text
+        :param text: the text to create a TextClip for
+        :param font_size: the size of font to use for the subtitles
+        :param colour: the colour to use for the subtitles
+        :param background_opacity: the opacity of the background of the subtitles
+        :param text_pos: where to display the subtitles
+        :return: CompositeVideoClip consisting of the subtitles
+        """
+        text_clip = TextClip(text, fontsize=font_size, color=colour)
+        width, height = text_clip.size
+        background = ColorClip(
+            size=(width + 20, height + 10),
+            color=(0, 0, 0),
+            duration=text_clip.duration
+        )
+        background = background.set_opacity(background_opacity)
+        final_clip = CompositeVideoClip([background.set_position(text_pos), text_clip.set_position(text_pos)])
+        return final_clip.set_duration(text_clip.duration)
 
-    @image_path.setter
-    def image_path(self, image_path: str):
-        if image_path is not None:
-            self._image_path = image_path
-        elif self.local_image_storage is True and image_path is None:
+    def generate_video(self, output_filepath: Optional[str] = None) -> str:
+        """
+        Combine audio, images and text to generate and save a video
+        :param output_filepath: the absolute path to store the generated video
+        :return: the file path to where the video is written
+        """
+        if output_filepath is None:
             dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-            file_name = os.path.join(os.path.dirname(__file__), f"images/{dt},jpg")
-            self._image_path = file_name
-        elif self.local_image_storage is False and image_path is None:
-            pass
+            output_filepath = f"{Paths.VIDEO_DIR_PATH}/{dt}.mp4"
 
-    def _check_valid_image_path(self):
-        if self.local_image_storage is True:
-            file_path = Path(self.image_path)
-            if not file_path.is_file():
-                raise ValueError(f"Either the image path you provided could not be located, or an image could not be "
-                                 f"found in the default path location. Try specifying the image_path arg")
-        elif self.local_image_storage is False:
-            pass
+        audio_clip = AudioFileClip(self.audio_filepath)
+        image_clips = [
+            ImageClip(image).set_duration(audio_clip.duration / len(self.image_paths)) for image in self.image_paths
+        ]
+        subtitles = SubtitlesClip(self.subtitles_filepath, self.create_subtitle_clip)  # callback function
+        video_clip = concatenate_videoclips(image_clips)
+        video_clip = video_clip.set_audio(audio_clip)
+        video_clip.duration = audio_clip.duration
 
+        final_video = CompositeVideoClip([video_clip, subtitles.set_pos(('center', 'bottom'))])
+        final_video.duration = video_clip.duration
+        final_video.write_videofile(output_filepath, fps=24, temp_audiofile="temp-audio.m4a", remove_temp=True,
+                                    codec="libx264",
+                                    audio_codec="aac")
+
+        # Close clips to free up resources
+        audio_clip.close()
+        subtitles.close()
+        final_video.close()
+        for clip in image_clips:
+            clip.close()
+
+        return output_filepath
