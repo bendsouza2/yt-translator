@@ -389,9 +389,7 @@ class Audio:
             messages=[
                 {
                     "role": "user",
-                    "content": Prompts.SENTENCE_TRANSLATOR.format(
-                        sentence=self.sentence
-                    ),
+                    "content": Prompts.SENTENCE_TRANSLATOR + self.sentence,
                 }
             ],
         )
