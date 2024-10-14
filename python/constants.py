@@ -1,12 +1,12 @@
 """Module for storing constants for the project"""
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Final, Dict
 
 LANGUAGE_TO_LEARN = "es"
 NATIVE_LANGUAGE = "en"
 
-THREE_LETTER_MAP = {
+THREE_LETTER_MAP: Final[Dict[str, str]] = {
     "eng": "en",  # English
     "spa": "es",  # Spanish
     "fra": "fr",  # French
@@ -28,7 +28,7 @@ THREE_LETTER_MAP = {
     "slk": "sk",  # Slovak
 }
 
-TWO_LETTER_MAP = {
+TWO_LETTER_MAP: Final[Dict[str, str]] = {
     "en": "English",
     "es": "Spanish",
     "fr": "French",
