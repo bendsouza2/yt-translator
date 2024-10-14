@@ -12,7 +12,7 @@ from soundfile import SoundFile
 from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
-from moviepy.editor import *
+from moviepy.editor import ColorClip, TextClip, CompositeVideoClip, AudioFileClip, ImageClip, concatenate_videoclips
 from moviepy.video.tools.subtitles import SubtitlesClip
 import spacy
 import enchant
@@ -449,7 +449,7 @@ class VideoGenerator:
             font_size: int = 50,
             colour: str = "white",
             background_opacity: float = 0.7,
-            text_pos: Tuple[int | float | str] = ("center", "center")
+            text_pos: Tuple[str, str] | Tuple[int, int] | Tuple[float, float] = ("center", "center")
     ) -> CompositeVideoClip:
         """
         Create subtitles for given text
