@@ -55,8 +55,14 @@ TWO_LETTER_MAP = {
 @dataclass
 class Prompts:
     SENTENCE_GENERATOR = "escribe una frase de ejemplo sobre el uso de la palabra {word}"
-    SENTENCE_TRANSLATOR = f"Translate the following sentence from {TWO_LETTER_MAP[LANGUAGE_TO_LEARN]} to {TWO_LETTER_MAP[NATIVE_LANGUAGE]}: "
-    WORD_TRANSLATOR = f"What does the following {TWO_LETTER_MAP[LANGUAGE_TO_LEARN]} word mean in {TWO_LETTER_MAP[NATIVE_LANGUAGE]}: "
+    SENTENCE_TRANSLATOR = (
+        f"Translate the following sentence from {TWO_LETTER_MAP[LANGUAGE_TO_LEARN]} "
+        f"to {TWO_LETTER_MAP[NATIVE_LANGUAGE]}: "
+    )
+    WORD_TRANSLATOR = (
+        f"What does the following {TWO_LETTER_MAP[LANGUAGE_TO_LEARN]} word mean "
+        f"in {TWO_LETTER_MAP[NATIVE_LANGUAGE]}: "
+    )
     SYSTEM_MESSAGE = "You are a helpful assistant designed to help a user learn languages"
     IMAGE_GENERATOR = F"Generate an image to match the following {TWO_LETTER_MAP[LANGUAGE_TO_LEARN]} sentence: "
 
