@@ -11,8 +11,10 @@ print(audio_generator.word)
 print(audio_generator.sentence)
 print(audio_generator.translated_sentence)
 
+prompt = Prompts.IMAGE_GENERATOR + audio_generator.sentence
+
 image_generator = ImageGenerator(
-    prompts=Prompts.IMAGE_GENERATOR.format(sentence=audio_generator.sentence),
+    prompts=prompt,
 
 )
 
