@@ -1,3 +1,5 @@
+"""Module containing the functionality for generating sentences, audio and video for language learning resources"""
+
 import random
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
@@ -14,157 +16,10 @@ from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
 from moviepy.editor import ColorClip, TextClip, CompositeVideoClip, AudioFileClip, ImageClip, concatenate_videoclips
 from moviepy.video.tools.subtitles import SubtitlesClip
-import spacy
-import enchant
 
 from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths
 from python.utils import spanish_syllable_count
-
-
-class LanguageVerification:
-    """
-    Used to verify language
-    """
-
-    def __init__(
-            self,
-            language: str,
-    ):
-        """
-        Initialise a LanguageVerification object
-        :param language: the language you want to verify a word for
-        """
-        self.language = language
-
-    def lexical_test_real_word(self, word: str) -> bool:
-        """
-        Test if a word is genuine by checking it is in the dictionary
-        :param word: The word to test
-        :return True if the word exists in the dictionary, else False
-        """
-
-        query = {"text": word, "language": self.language}
-        headers = {
-            "X-RapidAPI-Key": os.getenv("rapid_api_key"),
-            "X-RapidAPI-Host": URLs.DICTIONARY_HOST,
-        }
-        response = requests.get(URLs.DICTIONARY_URL, headers=headers, params=query)
-        if response.json()["n_results"] == 0:
-            return False
-        else:
-            return True
-
-    def spacy_real_word(self, model: str, word: str) -> bool:
-        """
-        Test a word is real using Spacy. For more info see https://spacy.io/
-        :param model: The model to use to help identify the word
-        :param word: The word to test
-        :return: True if the word exists for the given language, False if not
-        """
-
-        if model is None:
-            model = f"{self.language}_core_news_sm"
-
-        language = spacy.load(model)
-        doc = language(word)
-        return doc[0].is_alpha and not doc[0].is_stop
-
-    def enchant_real_word(self, word: str) -> bool:
-        """
-        Test a word is real using enchant. For more info see https://pyenchant.github.io/pyenchant/install.html
-        :param word: The word to test
-        :return: True if the word exists for the given language, False if not
-        """
-        thesaurus = enchant.Dict(self.language)
-        return thesaurus.check(word)
-
-
-class ImageGenerator:
-    """
-    Can be used to generate and store images
-    """
-    def __init__(
-            self,
-            prompts: str | list,
-            local_image_storage: Optional[bool] = True,
-            local_file_path: Optional[str] = None,
-            s3_file_path: Optional[str] = None,
-    ):
-        """
-        Initialise an object of the ImageGenerator class
-        :param prompts: The prompts to use to create the image
-        :param local_image_storage: Optional. Whether to store the image locally or remotely. Defaults to True
-        :param local_file_path: Optional. The file path if storing the file locally
-        :param s3_file_path: Optional. The file path if storing the file in S3
-        """
-        self.prompts = prompts
-        self.image_urls = self.image_generator()
-        self.image_paths = self.save_image()
-        self.local_image_storage = local_image_storage
-        self._check_valid_image_path()
-
-    def call_dalle(self, sentence: str):
-        """
-        Make a call to DALL-E API
-        :param sentence: The prompt for the API to base the image on
-        """
-        client = OpenAI(api_key=os.getenv("openai_key"))
-        response = client.images.generate(
-            model=ModelTypes.DALLE_MODEL,
-            prompt=sentence,
-            size=VideoSettings.VERTICAL,
-            quality="standard",
-            n=1,
-        )
-        image_url = response.data[0].url
-
-        return image_url
-
-    def image_generator(self) -> list:
-        """
-        Make calls to the DALL-E API
-        """
-        if isinstance(self.prompts, str):
-            image = self.call_dalle(self.prompts)
-            return [image]
-        elif isinstance(self.prompts, list):
-            images = [self.call_dalle(prompt) for prompt in self.prompts]
-            return images
-        else:
-            raise TypeError(f"prompts argument must be either string or list, got type {type(self.prompts)}")
-
-    def save_image(self):
-        """
-        Save images to local directory
-        """
-        filepaths = []
-        for url in self.image_urls:
-            dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-            output_file_path = f"{Paths.IMAGE_DIR_PATH}/{dt}.jpg"
-            img_data = requests.get(url).content
-            with open(output_file_path, "wb") as handler:
-                handler.write(img_data)
-            filepaths.append(output_file_path)
-        return filepaths
-
-    def save_image_to_s3(self):
-        """
-        Save images to S3
-        """
-        raise NotImplementedError
-
-    def _check_valid_image_path(self):
-        """
-        Check the image is saved to a valid location
-        """
-        if self.local_image_storage is True:
-            for local_image_path in self.image_paths:
-                file_path = Path(local_image_path)
-                if not file_path.is_file():
-                    raise ValueError(f"Either the image path you provided could not be located, or an image could not "
-                                     f"be found in the default path location.")
-        elif self.local_image_storage is False:
-            raise NotImplementedError
+from python.language_verification import LanguageVerification
 
 
 class Audio:
@@ -206,11 +61,6 @@ class Audio:
         tts = gTTS(self.sentence, lang=language)
         tts.save(filepath)
         return filepath
-
-        # TODO - gtts accepts max 100 characters before splitting into multiple files - need to either have something in the
-        # prompt that stops sentences > 100 characters being generated + a test that the returned sentence is < 100, OR need
-        # a way of piecing together split audio files
-        # On reflection think the best way to do this is probably to be able to piece together text files when they get split
 
     def get_audio_duration(self) -> float:
         """
@@ -409,6 +259,94 @@ class Audio:
         translator = GoogleTranslator(source=source_language, target=target_language)
         translated_sentence = translator.translate(self.sentence)
         return translated_sentence
+
+
+class ImageGenerator:
+    """
+    Can be used to generate and store images
+    """
+    def __init__(
+            self,
+            prompts: str | list,
+            local_image_storage: Optional[bool] = True,
+            local_file_path: Optional[str] = None,
+            s3_file_path: Optional[str] = None,
+    ):
+        """
+        Initialise an object of the ImageGenerator class
+        :param prompts: The prompts to use to create the image
+        :param local_image_storage: Optional. Whether to store the image locally or remotely. Defaults to True
+        :param local_file_path: Optional. The file path if storing the file locally
+        :param s3_file_path: Optional. The file path if storing the file in S3
+        """
+        self.prompts = prompts
+        self.image_urls = self.image_generator()
+        self.image_paths = self.save_image()
+        self.local_image_storage = local_image_storage
+        self._check_valid_image_path()
+
+    def call_dalle(self, sentence: str):
+        """
+        Make a call to DALL-E API
+        :param sentence: The prompt for the API to base the image on
+        """
+        client = OpenAI(api_key=os.getenv("openai_key"))
+        response = client.images.generate(
+            model=ModelTypes.DALLE_MODEL,
+            prompt=sentence,
+            size=VideoSettings.VERTICAL,
+            quality="standard",
+            n=1,
+        )
+        image_url = response.data[0].url
+
+        return image_url
+
+    def image_generator(self) -> list:
+        """
+        Make calls to the DALL-E API
+        """
+        if isinstance(self.prompts, str):
+            image = self.call_dalle(self.prompts)
+            return [image]
+        elif isinstance(self.prompts, list):
+            images = [self.call_dalle(prompt) for prompt in self.prompts]
+            return images
+        else:
+            raise TypeError(f"prompts argument must be either string or list, got type {type(self.prompts)}")
+
+    def save_image(self):
+        """
+        Save images to local directory
+        """
+        filepaths = []
+        for url in self.image_urls:
+            dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
+            output_file_path = f"{Paths.IMAGE_DIR_PATH}/{dt}.jpg"
+            img_data = requests.get(url).content
+            with open(output_file_path, "wb") as handler:
+                handler.write(img_data)
+            filepaths.append(output_file_path)
+        return filepaths
+
+    def save_image_to_s3(self):
+        """
+        Save images to S3
+        """
+        raise NotImplementedError
+
+    def _check_valid_image_path(self):
+        """
+        Check the image is saved to a valid location
+        """
+        if self.local_image_storage is True:
+            for local_image_path in self.image_paths:
+                file_path = Path(local_image_path)
+                if not file_path.is_file():
+                    raise ValueError(f"Either the image path you provided could not be located, or an image could not "
+                                     f"be found in the default path location.")
+        elif self.local_image_storage is False:
+            raise NotImplementedError
 
 
 class VideoGenerator:
