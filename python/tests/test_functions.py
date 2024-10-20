@@ -38,12 +38,12 @@ class TestWordGenerator(unittest.TestCase):
         """Tear down class method to stop mocks once tests have run"""
         cls.mock_get.stop()
         cls.mock_google_translator.stop()
+        cls.mock_sentence_generator.stop()
         cls.mock_remove_word_from_file.stop()
         cls.mock_enchant.stop()
 
         cls.mock_tts.stop()
         cls.mock_get_audio_duration()
-        cls.mock_get_total_syllable_count.stop()
         cls.mock_generate_srt_file.stop()
 
     def test_read_text_file(self):
