@@ -46,7 +46,6 @@ class Audio:
         )
         self.audio_path = self.text_to_speech(language=self.language_to_learn)
         self.audio_duration = self.get_audio_duration()
-        self.syllable_count = self.get_total_syllable_count_spanish()
         self.sub_filepath = self.echogarden_generate_subtitles(sentence=self.sentence)
 
     def text_to_speech(self, language: str, filepath: Optional[str] = None) -> str:
@@ -82,11 +81,12 @@ class Audio:
             sentence_count += word_count
         return sentence_count
 
-    def generate_srt_file(self) -> str:
+    def generate_srt_file(self, total_syllable_count: int) -> str:
         """
         Writes the sentence to a .srt subtitle file
+        :param total_syllable_count: The total number of syllables in the audio
         """
-        syllables_per_second = self.audio_duration / self.syllable_count
+        syllables_per_second = self.audio_duration / total_syllable_count
         subtitle_length = 3
         words = self.sentence.split(" ")
         phrases = []
