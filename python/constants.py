@@ -92,3 +92,5 @@ class Paths:
     IMAGE_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/images"
     NODE_SUBS_FILE_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/node/sync_subtitles.js"
     VIDEO_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/video"
+    GOOGLE_CREDS_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/google_creds.json"
+    YT_TOKEN_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/python/token.json"
