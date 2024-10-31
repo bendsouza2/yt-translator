@@ -1,4 +1,5 @@
 from word_generator import Audio, ImageGenerator, VideoGenerator
+from yt_uploader import YTConnector
 from constants import Paths, LANGUAGE_TO_LEARN, NATIVE_LANGUAGE, Prompts
 
 audio_generator = Audio(
@@ -28,4 +29,15 @@ video_generator = VideoGenerator(
 
 )
 
-video_generator.generate_video()
+video_filepath = video_generator.generate_video()
+video_metadata = video_generator.generate_video_metadata(language_code=LANGUAGE_TO_LEARN)
+
+yt = YTConnector(
+    credentials_env=True
+)
+yt.upload_youtube_short(
+    video_path=video_filepath,
+    title=video_metadata["title"],
+    description=video_metadata["description"],
+    tags=video_metadata["tags"]
+)

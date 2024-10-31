@@ -51,7 +51,6 @@ TWO_LETTER_MAP: Final[Dict[str, str]] = {
 }
 
 
-
 @dataclass
 class Prompts:
     SENTENCE_GENERATOR = "escribe una frase de ejemplo sobre el uso de la palabra {word}"
@@ -83,6 +82,7 @@ class ModelTypes:
 class VideoSettings:
     SQUARE: Literal["1024x1024"] = "1024x1024"
     VERTICAL: Literal["1024x1792"] = "1024x1792"
+    TAGS = ["languages", "education", "language learning"]
 
 
 class Paths:
@@ -92,3 +92,5 @@ class Paths:
     IMAGE_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/images"
     NODE_SUBS_FILE_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/node/sync_subtitles.js"
     VIDEO_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/video"
+    GOOGLE_CREDS_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/google_creds.json"
+    YT_TOKEN_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/python/token.json"

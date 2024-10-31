@@ -1,0 +1,16 @@
+black==23.12.1
+requests~=2.31.0
+types-requests==2.32.0.20240914
+scipy==1.12.0
+numpy==1.26.3
+mypy==1.11.2
+python-dotenv==1.0.1
+pytest==8.3.3
+gTTS~=2.5.1
+moviepy~=1.0.3
+openai==1.7.2
+deep-translator==1.11.4
+soundfile==0.12.1
+pyenchant==3.2.2
+spacy==3.7.6
+mypy==1.11.2
