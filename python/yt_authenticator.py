@@ -1,3 +1,4 @@
+"""This module can be used to authenticate the app with your Google Account"""
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 from constants import Paths
