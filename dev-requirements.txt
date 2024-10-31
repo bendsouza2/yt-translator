@@ -11,3 +11,6 @@ moviepy~=1.0.3
 openai==1.7.2
 deep-translator==1.11.4
 soundfile==0.12.1
+pyenchant==3.2.2
+spacy==3.7.6
+mypy==1.11.2
