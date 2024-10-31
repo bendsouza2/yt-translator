@@ -2,7 +2,7 @@
 
 import random
 from datetime import datetime, timedelta
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 from pathlib import Path
 import os
 import re
@@ -17,7 +17,7 @@ from deep_translator import GoogleTranslator
 from moviepy.editor import ColorClip, TextClip, CompositeVideoClip, AudioFileClip, ImageClip, concatenate_videoclips
 from moviepy.video.tools.subtitles import SubtitlesClip
 
-from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths
+from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths, TWO_LETTER_MAP
 from python.utils import spanish_syllable_count
 from python.language_verification import LanguageVerification
 
@@ -440,3 +440,52 @@ class VideoGenerator:
             clip.close()
 
         return output_filepath
+
+    def generate_video_title(self, language: str) -> str:
+        """
+        Generate a title for the video
+        :param language: The language that the video is in
+        :return: A string formatted to include the language
+        """
+        return f"{language} Word of the Day: {self.word}"
+
+    def generate_video_description(self, language: str) -> str:
+        """
+        Generate a description explaining the content of the video
+        :param language: the language that the video is in
+        :return: a text description of the video
+        """
+        descr = f"Today's {language} word of the day is {self.word}. An example use of this word is: " \
+                f"'{self.sentence}' which translates to {self.translated_sentence}"
+        return descr
+
+    @staticmethod
+    def generate_video_tags(language: str) -> List[str]:
+        """
+        Generate the tags for a video
+        :param language: the language that the video is in
+        :return: a list of tags which describe the video
+        """
+        tags = VideoSettings.TAGS
+        tags.append(language)
+        tags.append(f"Easy {language}")
+        return tags
+
+    def generate_video_metadata(self, language_code: str) -> Dict[str, str | List[str]]:
+        """
+        Generate the metadata for a video
+        :param language_code: the two letter language code representing the language that the video is in
+        :return: A dictionary containing a video title, description and tags
+        """
+        language = TWO_LETTER_MAP.get(language_code, language_code)
+        tags = self.generate_video_tags(language)
+        description = self.generate_video_description(language)
+        title = self.generate_video_title(language)
+        meta = {
+            "tags": tags,
+            "description": description,
+            "title": title,
+        }
+        return meta
+
+

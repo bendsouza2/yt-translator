@@ -51,7 +51,6 @@ TWO_LETTER_MAP: Final[Dict[str, str]] = {
 }
 
 
-
 @dataclass
 class Prompts:
     SENTENCE_GENERATOR = "escribe una frase de ejemplo sobre el uso de la palabra {word}"
@@ -83,6 +82,7 @@ class ModelTypes:
 class VideoSettings:
     SQUARE: Literal["1024x1024"] = "1024x1024"
     VERTICAL: Literal["1024x1792"] = "1024x1792"
+    TAGS = ["languages", "education", "language learning"]
 
 
 class Paths:
