@@ -19,8 +19,12 @@ class YTConnector:
             self,
             credentials_path: Optional[str] = None,
             credentials_env: bool = False,
-            local_storage: bool = False
     ):
+        """
+        Initialise a YTConnector object
+        :param credentials_path: Optional. The absolute path to the credentials
+        :param credentials_env: If true, the credentials will be loaded from the 'YOUTUBE_CREDENTIALS' env variable
+        """
         self.credentials_path = credentials_path
         self.credentials_env = credentials_env
         self.credentials = self.get_yt_credentials()
@@ -40,7 +44,6 @@ class YTConnector:
             self._credentials_env = None
         else:
             creds = os.getenv("YOUTUBE_CREDENTIALS")
-            print(creds)
             self._credentials_env = json.loads(creds)
 
     def get_yt_credentials(self) -> Credentials:
@@ -91,13 +94,67 @@ class YTConnector:
             title: str,
             description: str,
             tags: Optional[List] = None,
-    ):
-        pass
+            category_id: int = 27,
+            private_video: bool = False,
+            made_for_kids: bool = False,
+    ) -> Dict:
+        """
+        Upload a video to youtube shorts
+        :param video_path: the absolute path to the video to upload
+        :param title: the title to give to the video
+        :param description: the description to add for the video
+        :param tags: tags to add for the video
+        :param category_id: the content category that the video belongs to
+        :param private_video: if the video should be private, defaults to False
+        :param made_for_kids: if the video is target at kids, defaults to False,
+        :return: a dictionary with the response from the API
+        """
+        if not os.path.exists(video_path):
+            raise FileNotFoundError(f"Video file not found: {video_path}")
+
+        status = "private" if private_video is True else "public"
+        body = {
+            'snippet': {
+                'title': title,
+                'description': description,
+                'tags': tags or [],
+                'categoryId': category_id
+            },
+            'status': {
+                'privacyStatus': status,
+                'selfDeclaredMadeForKids': made_for_kids,
+            }
+        }
+
+        media = MediaFileUpload(
+            video_path,
+            mimetype='video/*',
+            resumable=True,
+            chunksize=1024 * 1024  # 1MB chunks
+        )
+
+        insert_request = self.youtube_client.videos().insert(
+            part=','.join(body.keys()),
+            body=body,
+            media_body=media
+        )
+
+        response = None
+        while response is None:
+            status, response = insert_request.next_chunk()
+            if status:
+                print(f"Uploaded {int(status.progress() * 100)}%")
+
+        video_id = response['id']
+        video_url = f"https://youtube.com/shorts/{video_id}"
+
+        print(f"Upload Complete! Short URL: {video_url}")
+        return response
 
     def list_yt_subscriptions(self) -> Dict[str, Any]:
         """
         List subscriptions
-        :return:
+        :return: a dictionary with the metadata for the subscriptions
         """
         request = self.youtube_client.subscriptions().list(
             part="snippet,contentDetails",
@@ -105,3 +162,23 @@ class YTConnector:
         )
         response = request.execute()
         return response
+
+    def list_available_channels(self):
+        """
+        List the available channels associated with the authorised account
+        :return: a dictionary with the metadata for each channel
+        """
+        channel_response = self.youtube_client.channels().list(
+            part="snippet,contentDetails",
+            mine=True
+        ).execute()
+        channels = [
+            {
+                'id': channel['id'],
+                'title': channel['snippet']['title'],
+                'description': channel['snippet'].get('description', '')
+            }
+            for channel in channel_response.get('items', [])
+        ]
+
+        return channels
