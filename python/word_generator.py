@@ -460,7 +460,7 @@ class VideoGenerator:
         return descr
 
     @staticmethod
-    def generate_video_tags(language: str) -> List[str]:
+    def generate_video_tags(language: str) -> Sequence[str]:
         """
         Generate the tags for a video
         :param language: the language that the video is in

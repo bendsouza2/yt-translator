@@ -1,7 +1,7 @@
 """Module for connecting to YouTube and uploading videos"""
 import os
 import json
-from typing import Optional, List, Dict, Any
+from typing import Optional, Sequence, Dict, Any
 from dotenv import load_dotenv
 
 from googleapiclient.discovery import build
@@ -93,7 +93,7 @@ class YTConnector:
             video_path: str,
             title: str,
             description: str,
-            tags: Optional[List] = None,
+            tags: Optional[Sequence] = None,
             category_id: int = 27,
             private_video: bool = False,
             made_for_kids: bool = False,
