@@ -26,7 +26,7 @@ class YTConnector:
         :param credentials_env: If true, the credentials will be loaded from the 'YOUTUBE_CREDENTIALS' env variable
         """
         self.credentials_path = credentials_path
-        self.credentials_env = credentials_env
+        self.credentials_env = credentials_env  # type: ignore [assignment]
         self.credentials = self.get_yt_credentials()
         self.youtube_client = self.build_yt_client()
 
@@ -66,10 +66,10 @@ class YTConnector:
         Builds the required youtube credentials from a given token file
         :return: a dict containing the creds
         """
-        if not os.path.exists(self.credentials_path):
+        if not os.path.exists(self.credentials_path):  # type: ignore [arg-type]
             raise FileNotFoundError(f"Credentials file could not be found: {self.credentials_path} is not a valid path")
 
-        with open(self.credentials_path, "r") as token_file:
+        with open(self.credentials_path, "r") as token_file:  # type: ignore [arg-type]
             cred_data = json.load(token_file)
 
         creds = Credentials(
@@ -142,8 +142,6 @@ class YTConnector:
         response = None
         while response is None:
             status, response = insert_request.next_chunk()
-            if status:
-                print(f"Uploaded {int(status.progress() * 100)}%")
 
         video_id = response['id']
         video_url = f"https://youtube.com/shorts/{video_id}"

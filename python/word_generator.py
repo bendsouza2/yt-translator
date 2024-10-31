@@ -2,7 +2,7 @@
 
 import random
 from datetime import datetime, timedelta
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict, Sequence
 from pathlib import Path
 import os
 import re
@@ -471,7 +471,7 @@ class VideoGenerator:
         tags.append(f"Easy {language}")
         return tags
 
-    def generate_video_metadata(self, language_code: str) -> Dict[str, str | List[str]]:
+    def generate_video_metadata(self, language_code: str) -> Dict[str, str | Sequence[str]]:
         """
         Generate the metadata for a video
         :param language_code: the two letter language code representing the language that the video is in
