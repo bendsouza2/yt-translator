@@ -1,0 +1,8 @@
+black==23.12.1
+requests~=2.31.0
+types-requests==2.32.0.20240914
+scipy==1.12.0
+numpy==1.26.3
+mypy==1.11.2
+python-dotenv==1.0.1
+pytest==8.3.3
