@@ -9,6 +9,7 @@ import re
 import subprocess
 
 import requests
+import numpy as np
 from gtts import gTTS
 from soundfile import SoundFile
 from openai import OpenAI
@@ -16,10 +17,14 @@ from openai.types.chat.chat_completion import ChatCompletion
 from deep_translator import GoogleTranslator
 from moviepy.editor import ColorClip, TextClip, CompositeVideoClip, AudioFileClip, ImageClip, concatenate_videoclips
 from moviepy.video.tools.subtitles import SubtitlesClip
+from PIL import Image
 
 from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths, TWO_LETTER_MAP
 from python.utils import spanish_syllable_count
 from python.language_verification import LanguageVerification
+
+
+Image.ANTIALIAS = Image.Resampling.LANCZOS
 
 
 class Audio:
@@ -181,7 +186,6 @@ class Audio:
         """
         Test if a word is genuine by checking it is in the dictionary
         :param word: The word to test
-        :param language_code: The language the word should exist in
         :return True if the word exists in the dictionary, else False
         """
 
@@ -385,32 +389,144 @@ class VideoGenerator:
             font_size: int = 50,
             colour: str = "white",
             background_opacity: float = 0.7,
-            text_pos: Tuple[str, str] | Tuple[int, int] | Tuple[float, float] = ("center", "center")
+            text_pos: Tuple[str, str] | Tuple[int, int] | Tuple[float, float] = ("center", "center"),
+            font: str = "Courier",
+            padding: int = 60
     ) -> CompositeVideoClip:
         """
-        Create subtitles for given text
+        Create subtitles for given text with dynamic background width.
         :param text: the text to create a TextClip for
         :param font_size: the size of font to use for the subtitles
         :param colour: the colour to use for the subtitles
         :param background_opacity: the opacity of the background of the subtitles
         :param text_pos: where to display the subtitles
+        :param font: The font for the text
+        :param padding: padding for background width around the text
         :return: CompositeVideoClip consisting of the subtitles
         """
-        text_clip = TextClip(text, fontsize=font_size, color=colour)
+        text_clip = TextClip(text, fontsize=font_size, color=colour, font=font)
+
         width, height = text_clip.size
         background = ColorClip(
-            size=(width + 20, height + 10),
-            color=(0, 0, 0),
-            duration=text_clip.duration
-        )
-        background = background.set_opacity(background_opacity)
+            size=(width + padding * 2, height),
+            color=(0, 0, 0)
+        ).set_opacity(background_opacity)
+
         final_clip = CompositeVideoClip([background.set_position(text_pos), text_clip.set_position(text_pos)])
         return final_clip.set_duration(text_clip.duration)
 
-    def generate_video(self, output_filepath: Optional[str] = None) -> str:
+    def create_translated_subtitle_clip(
+            self,
+            translated_sentence: str,
+            audio_duration: float,
+            font_size: int = 50,
+            colour: str = "white",
+            font: str = "Courier",
+            padding: int = 60
+    ) -> CompositeVideoClip:
         """
-        Combine audio, images and text to generate and save a video
+        Creates a subtitle clip for a translated sentence with dynamically resizing background.
+        :param translated_sentence: The translated sentence to display as subtitles.
+        :param audio_duration: The total duration of the audio.
+        :param font_size: The font size for the subtitles.
+        :param colour: The colour for the subtitles.
+        :param font: The font for the text.
+        :param padding: Padding for the subtitle background
+        :return: A CompositeVideoClip containing the timed translated subtitles.
+        """
+        words = translated_sentence.split()
+        word_groups = [words[i:i + 3] for i in range(0, len(words), 3)]
+
+        group_count = len(word_groups)
+        display_duration = audio_duration / group_count
+
+        subtitle_clips = []
+        current_time = 0.0
+
+        for group in word_groups:
+            text = " ".join(group)
+
+            subtitle_clip = self.create_subtitle_clip(
+                text=text,
+                font_size=font_size,
+                colour=colour,
+                text_pos=("center", "top"),
+                font=font,
+                padding=padding
+            ).set_start(current_time).set_duration(display_duration)
+
+            subtitle_clips.append(subtitle_clip)
+            current_time += display_duration
+
+        final_subtitle_clip = CompositeVideoClip(subtitle_clips)
+        return final_subtitle_clip
+
+    @staticmethod
+    def create_fancy_word_clip(
+            word: str,
+            font_size: int = 80,
+            font: str = "Toppan-Bunkyu-Gothic-Demibold",
+            duration: float = 1.0,
+            stroke_colour: str = "green",
+            style: str = "bounce"
+    ) -> CompositeVideoClip:
+        """
+        Create a centered text clip for the given word
+        :param word: The word to visualise
+        :param font_size: The font size to display the word in
+        :param font: The font to display the word in, defaults to 'Courier'
+        :param duration: The length of time to display the text clip for
+        :param stroke_colour: The outer/lining colour of the font
+        :param style: The effect to apply to the text clip
+        :return: a CompositeVideoClip with the applied effects
+        """
+
+        effects = {
+            'bounce': lambda t: ('center', 'center' + 20 * np.sin(2 * np.pi * t)),
+            'fade': lambda t: 0.7 + 0.3 * np.sin(2 * np.pi * t)
+        }
+
+        word_text = TextClip(
+            txt=word,
+            fontsize=font_size,
+            font=font,
+            color='white',
+            stroke_color=stroke_colour,
+            stroke_width=5,
+            kerning=-2
+        )
+
+        background = ColorClip(                                 # TODO - change background to have rounded edges
+            size=(word_text.w + 100, word_text.h + 20),
+            color=(128, 128, 128)
+        ).set_opacity(0.7)
+
+        if style == 'bounce':
+            word_clip = CompositeVideoClip([background.set_position('center'), word_text.set_position('center')])
+            word_clip = word_clip.set_position(effects['bounce'])
+        elif style == 'fade':
+            word_clip = CompositeVideoClip([background, word_text]).set_opacity(effects['fade'])
+        else:
+            raise ValueError(f"{style} is not a recognised style. Use either 'bounce' or 'fade")
+
+        shadow = TextClip(
+            txt=word,
+            fontsize=font_size,
+            font=font,
+            color='gray',
+            stroke_width=0,
+            kerning=-2
+        ).set_position(lambda t: ('center', int(word_text.h / 2 + 10))).set_opacity(0.3)
+
+        final_clip = CompositeVideoClip([shadow, word_clip.set_position('center')]).set_duration(duration)
+
+        return final_clip
+
+    def generate_video(self, output_filepath: Optional[str] = None, word_font: str = "Courier") -> str:
+        """
+        Combine audio, images, word overlay and subtitles to generate and save a video
         :param output_filepath: the absolute path to store the generated video
+        :param word_font: The font for the text
         :return: the file path to where the video is written
         """
         if output_filepath is None:
@@ -421,20 +537,47 @@ class VideoGenerator:
         image_clips = [
             ImageClip(image).set_duration(audio_clip.duration / len(self.image_paths)) for image in self.image_paths
         ]
-        subtitles = SubtitlesClip(self.subtitles_filepath, self.create_subtitle_clip)  # callback function
+
+        word_clip = self.create_fancy_word_clip(
+            word=self.word,
+            font_size=80,
+            font=word_font,
+            duration=audio_clip.duration,
+            style='bounce'
+        )
+
+        subtitles = SubtitlesClip(self.subtitles_filepath, self.create_subtitle_clip)
+
+        translated_clip = self.create_translated_subtitle_clip(
+            translated_sentence=self.translated_sentence,
+            audio_duration=audio_clip.duration
+        )
+
         video_clip = concatenate_videoclips(image_clips)
         video_clip = video_clip.set_audio(audio_clip)
         video_clip.duration = audio_clip.duration
 
-        final_video = CompositeVideoClip([video_clip, subtitles.set_pos(('center', 'bottom'))])
+        final_video = CompositeVideoClip([
+            video_clip,
+            word_clip.set_pos(('center', 'center')),
+            subtitles.set_pos(('center', 'bottom')),
+            translated_clip.set_pos(('center', 'top')),
+        ])
+
         final_video.duration = video_clip.duration
-        final_video.write_videofile(output_filepath, fps=24, temp_audiofile="temp-audio.m4a", remove_temp=True,
-                                    codec="libx264",
-                                    audio_codec="aac")
+        final_video.write_videofile(
+            output_filepath,
+            fps=24,
+            temp_audiofile="temp-audio.m4a",
+            remove_temp=True,
+            codec="libx264",
+            audio_codec="aac"
+        )
 
         # Close clips to free up resources
         audio_clip.close()
         subtitles.close()
+        word_clip.close()
         final_video.close()
         for clip in image_clips:
             clip.close()

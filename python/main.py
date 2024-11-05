@@ -16,7 +16,6 @@ prompt = Prompts.IMAGE_GENERATOR + audio_generator.sentence
 
 image_generator = ImageGenerator(
     prompts=prompt,
-
 )
 
 video_generator = VideoGenerator(
@@ -26,7 +25,6 @@ video_generator = VideoGenerator(
     image_paths=image_generator.image_paths,
     audio_filepath=audio_generator.audio_path,
     subtitles_filepath=audio_generator.sub_filepath
-
 )
 
 video_filepath = video_generator.generate_video()
