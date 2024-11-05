@@ -24,7 +24,7 @@ from python.utils import spanish_syllable_count
 from python.language_verification import LanguageVerification
 
 
-Image.ANTIALIAS = Image.Resampling.LANCZOS
+Image.ANTIALIAS = Image.Resampling.LANCZOS  # type: ignore[attr-defined]
 
 
 class Audio:
