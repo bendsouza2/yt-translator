@@ -1,7 +1,9 @@
 """This module can be used to authenticate the app with your Google Account"""
+import os
+
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-from constants import Paths
+from constants import Paths, EnvVariables
 
 SCOPES = [
     "https://www.googleapis.com/auth/youtube",
@@ -24,3 +26,5 @@ print("Client Secret:", creds.client_secret)
 
 with open(Paths.YT_TOKEN_PATH, "w") as token_file:
     token_file.write(creds.to_json())
+
+os.environ[EnvVariables.YOUTUBE_CREDENTIALS] = str(creds.to_json())

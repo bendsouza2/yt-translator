@@ -51,6 +51,10 @@ TWO_LETTER_MAP: Final[Dict[str, str]] = {
 }
 
 
+class EnvVariables:
+    YOUTUBE_CREDENTIALS = "YOUTUBE_CREDENTIALS"
+
+
 @dataclass
 class Prompts:
     SENTENCE_GENERATOR = "escribe una frase de ejemplo sobre el uso de la palabra {word}"

@@ -1,12 +1,14 @@
 """Module for connecting to YouTube and uploading videos"""
 import os
 import json
-from typing import Optional, Sequence, Dict, Any
+from typing import Optional, Sequence, Dict, Any, List
 from dotenv import load_dotenv
 
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from googleapiclient.http import MediaFileUpload
+
+from python.constants import EnvVariables
 
 
 load_dotenv()
@@ -26,7 +28,7 @@ class YTConnector:
         :param credentials_env: If true, the credentials will be loaded from the 'YOUTUBE_CREDENTIALS' env variable
         """
         self.credentials_path = credentials_path
-        self.credentials_env = credentials_env  # type: ignore [assignment]
+        self.credentials_env = credentials_env  # type: ignore[assignment]
         self.credentials = self.get_yt_credentials()
         self.youtube_client = self.build_yt_client()
 
@@ -43,7 +45,7 @@ class YTConnector:
         if credentials_env is False:
             self._credentials_env = None
         else:
-            creds = os.getenv("YOUTUBE_CREDENTIALS")
+            creds = os.getenv(EnvVariables.YOUTUBE_CREDENTIALS)
             self._credentials_env = json.loads(creds)
 
     def get_yt_credentials(self) -> Credentials:
@@ -66,10 +68,10 @@ class YTConnector:
         Builds the required youtube credentials from a given token file
         :return: a dict containing the creds
         """
-        if not os.path.exists(self.credentials_path):  # type: ignore [arg-type]
+        if not os.path.exists(self.credentials_path):  # type: ignore[arg-type]
             raise FileNotFoundError(f"Credentials file could not be found: {self.credentials_path} is not a valid path")
 
-        with open(self.credentials_path, "r") as token_file:  # type: ignore [arg-type]
+        with open(self.credentials_path, "r") as token_file:  # type: ignore[arg-type]
             cred_data = json.load(token_file)
 
         creds = Credentials(
@@ -161,7 +163,7 @@ class YTConnector:
         response = request.execute()
         return response
 
-    def list_available_channels(self):
+    def list_available_channels(self) -> List[Dict[str, str]]:
         """
         List the available channels associated with the authorised account
         :return: a dictionary with the metadata for each channel
@@ -180,3 +182,36 @@ class YTConnector:
         ]
 
         return channels
+
+    def list_youtube_uploads(self, channel_id: str, max_results: int = 50) -> Dict[str, Dict[str, str]]:
+        """
+        Get the details of the videos uploaded to a youtube channel
+        :param channel_id: the ID for the channel to get the uploads for
+        :param max_results: the number of video uploads to get the data for
+        :return: A dictionary with the video_id as the key and a nested dictionary with the video title, description
+        and thumbnail url as the value
+        """
+        response = self.youtube_client.search().list(
+            part="id,snippet",
+            channelId=channel_id,
+            maxResults=max_results,
+            type="video"
+        ).execute()
+
+        video_dict = {}
+        for item in response.get("items", []):
+
+            video_id = item['id']['videoId']
+            title = item['snippet']['title']
+            description = item['snippet']['description']
+            thumbnail_url = item['snippet']['thumbnails']['high']['url']
+            published_at = item['snippet']['publishedAt']
+
+            video_dict[video_id] = {
+                "title": title,
+                "description": description,
+                "thumbnail_url": thumbnail_url,
+                "published_at": published_at,
+            }
+
+        return video_dict
