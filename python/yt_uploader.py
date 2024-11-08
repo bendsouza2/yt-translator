@@ -8,6 +8,8 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from googleapiclient.http import MediaFileUpload
 
+from python.constants import EnvVariables
+
 
 load_dotenv()
 
@@ -43,7 +45,7 @@ class YTConnector:
         if credentials_env is False:
             self._credentials_env = None
         else:
-            creds = os.getenv("YOUTUBE_CREDENTIALS")
+            creds = os.getenv(EnvVariables.YOUTUBE_CREDENTIALS)
             self._credentials_env = json.loads(creds)
 
     def get_yt_credentials(self) -> Credentials:
@@ -203,11 +205,13 @@ class YTConnector:
             title = item['snippet']['title']
             description = item['snippet']['description']
             thumbnail_url = item['snippet']['thumbnails']['high']['url']
+            published_at = item['snippet']['publishedAt']
 
             video_dict[video_id] = {
                 "title": title,
                 "description": description,
-                "thumbnail_url": thumbnail_url
+                "thumbnail_url": thumbnail_url,
+                "published_at": published_at,
             }
 
         return video_dict
