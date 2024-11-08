@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}My YouTube Videos{% endblock %}</title>
+    <style>
+        .video-container {
+        margin: 20px auto;
+        max-width: 315;
+        padding: 20px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Make the video responsive */
+        .video-container iframe {
+            width: 100%;
+            aspect-ratio: 9/16;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>My Video Collection</h1>
+        <!-- Add your navigation here if needed -->
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <!-- Learn Spanish -->
+    </footer>
+</body>
+</html>

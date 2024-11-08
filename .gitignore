@@ -1,2 +1,17 @@
 config.py
 .env
+venv/
+
+#Django files
+app/db.sqlite3
+*.pyc
+*.log
+*.sqlite3-journal
+__pycache__/
+
+app/video_host/settings.py
+migrations/
+
+
+#OS Specific
+.DS_Store
