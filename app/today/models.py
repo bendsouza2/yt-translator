@@ -6,3 +6,7 @@ class Video(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     thumbnail_url = models.URLField()
+    upload_date = models.DateTimeField(default="2024-11-05T15:41:31Z")
+
+    def __str__(self):
+        return self.video_id
