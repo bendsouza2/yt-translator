@@ -151,6 +151,24 @@ class YTConnector:
         print(f"Upload Complete! Short URL: {video_url}")
         return response
 
+    def delete_youtube_short(self, video_id: str) -> Dict[str, str]:
+        """
+        Delete a youtube video
+        :param video_id: the ID of the video to be deleted
+        :return: a status message confirming the video deletion
+        """
+        confirmation = input(
+            f"WARNING: You are about to delete the video with ID {video_id}. This action is irreversible. "
+            f"Are you sure you want to proceed? (y/n): ").strip().lower()
+
+        if confirmation != "y":
+            return {"status": "cancelled", "message": "Video deletion cancelled by the user."}
+
+        delete_request = self.youtube_client.videos().delete(id=video_id)
+        delete_request.execute()
+
+        return {"status": "success", "message": f"Video with ID {video_id} deleted successfully."}
+
     def list_yt_subscriptions(self) -> Dict[str, Any]:
         """
         List subscriptions
