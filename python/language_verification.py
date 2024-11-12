@@ -1,6 +1,7 @@
 """Module for verifying language using LLMs to verify that a word/sentence is real"""
 
 import os
+from typing import Dict
 
 import requests
 import spacy
@@ -65,3 +66,27 @@ class LanguageVerification:
         """
         thesaurus = enchant.Dict(self.language)
         return thesaurus.check(word)
+
+    def get_spanish_dictionary_definition(self, word: str) -> Dict:
+        """
+        Check that a word exists in the dictionary and return its definition
+        :param word: the word to check for
+        :return: A dict with the status code and definitions if successful
+        """
+        if str.lower(self.language) not in ("spanish", "es", "spa"):
+            raise ValueError("The get_spanish_dictionary_definition only works with Spanish words")
+
+        api_key = os.getenv("MARIAM_WEBSTER_KEY")
+        if api_key is None:
+            raise ValueError("Couldn't get the required API key, make sure that your API key is configured as an "
+                             "environment variable with the key 'MARIAM_WEBSTER_KEY'")
+
+        url = f"https://www.dictionaryapi.com/api/v3/references/spanish/json/{word}?key={api_key}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            return data
+        else:
+            return {"Error getting dictionary definition": response.status_code}
+
+
