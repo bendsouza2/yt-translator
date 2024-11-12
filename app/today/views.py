@@ -4,7 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 
-from today.models import Video, VideoDetails, VideoDetailsSerializer
+from today.models import Video, VideoDetails
+from today.serializers import VideoDetailsSerializer
 
 
 class VideoDetailsViewSet(viewsets.ModelViewSet):
