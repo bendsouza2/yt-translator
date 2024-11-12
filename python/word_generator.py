@@ -621,7 +621,6 @@ class VideoGenerator:
             audio_codec="aac"
         )
 
-        # Clean up
         os.unlink(translated_srt)
 
         # Close clips to free up resources
