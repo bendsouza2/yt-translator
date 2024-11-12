@@ -7,6 +7,8 @@ from pathlib import Path
 import os
 import re
 import subprocess
+import tempfile
+import time
 
 import requests
 import numpy as np
@@ -218,6 +220,22 @@ class Audio:
             real_word = LanguageVerification(self.language_to_learn).enchant_real_word(word)
             self.remove_word_from_file(file_path=self.file_path, word_to_remove=word)
         return word, real_word
+
+    def get_spanish_definition(self) -> Dict[str, List[str]]:
+        """
+        Get the definition of a word in Spanish and English
+        :return: A dictionary with a list of definitions
+        """
+        response = LanguageVerification(self.language_to_learn).get_spanish_dictionary_definition(word=self.word)
+        result: Dict[str, List[str]] = {}
+        for entry in response:
+            headword = entry.get('meta', {}).get('id')
+            if headword != self.word:
+                continue
+            result["short"] = []
+            for shortdef in entry.get("shortdef", []):
+                result["short"].append(shortdef)
+        return result
 
     def generate_example_sentence(self) -> str:
         """Generate an example sentence demonstrating the context of a given word"""
@@ -461,6 +479,34 @@ class VideoGenerator:
         final_subtitle_clip = CompositeVideoClip(subtitle_clips)
         return final_subtitle_clip
 
+    def create_translated_subtitles_file(self, audio_duration: float) -> str:
+        """
+        Creates a temporary SRT file for translated subtitles.
+        :param audio_duration: Duration of the audio clip
+        :return: Path to the created subtitles file
+        """
+        words = self.translated_sentence.split()
+        word_groups = [words[i:i + 3] for i in range(0, len(words), 3)]
+
+        group_count = len(word_groups)
+        display_duration = audio_duration / group_count
+
+        temp_srt = tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.srt')
+
+        for idx, group in enumerate(word_groups):
+            start_time = idx * display_duration
+            end_time = (idx + 1) * display_duration
+
+            start_str = time.strftime('%H:%M:%S,000', time.gmtime(start_time))
+            end_str = time.strftime('%H:%M:%S,000', time.gmtime(end_time))
+
+            temp_srt.write(f"{idx + 1}\n")
+            temp_srt.write(f"{start_str} --> {end_str}\n")
+            temp_srt.write(f"{' '.join(group)}\n\n")
+
+        temp_srt.close()
+        return temp_srt.name
+
     @staticmethod
     def create_fancy_word_clip(
             word: str,
@@ -548,10 +594,11 @@ class VideoGenerator:
 
         subtitles = SubtitlesClip(self.subtitles_filepath, self.create_subtitle_clip)
 
-        translated_clip = self.create_translated_subtitle_clip(
-            translated_sentence=self.translated_sentence,
-            audio_duration=audio_clip.duration
-        )
+        translated_srt = self.create_translated_subtitles_file(audio_clip.duration)
+        translated_subtitles = SubtitlesClip(translated_srt, lambda txt: self.create_subtitle_clip(
+            txt,
+            text_pos=("center", "top")
+        ))
 
         video_clip = concatenate_videoclips(image_clips)
         video_clip = video_clip.set_audio(audio_clip)
@@ -561,7 +608,7 @@ class VideoGenerator:
             video_clip,
             word_clip.set_pos(('center', 'center')),
             subtitles.set_pos(('center', 'bottom')),
-            translated_clip.set_pos(('center', 'top')),
+            translated_subtitles.set_pos(('center', 'top')),
         ])
 
         final_video.duration = video_clip.duration
@@ -574,9 +621,12 @@ class VideoGenerator:
             audio_codec="aac"
         )
 
+        os.unlink(translated_srt)
+
         # Close clips to free up resources
         audio_clip.close()
         subtitles.close()
+        translated_subtitles.close()
         word_clip.close()
         final_video.close()
         for clip in image_clips:
