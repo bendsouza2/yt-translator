@@ -229,7 +229,6 @@ class Audio:
         response = LanguageVerification(self.language_to_learn).get_spanish_dictionary_definition(word=self.word)
         result = {}
         for entry in response:
-            # Print the main headword
             headword = entry.get('meta', {}).get('id')
             if headword != self.word:
                 continue
