@@ -45,8 +45,8 @@ def process_video_and_upload() -> Dict[str, str]:
     )
     upload_details = yt.upload_youtube_short(
         video_path=video_filepath,
-        title=video_metadata["title"],
-        description=video_metadata["description"],
+        title=video_metadata["title"],  # type: ignore[arg-type]
+        description=video_metadata["description"],  # type: ignore[arg-type]
         tags=video_metadata["tags"]
     )
 
