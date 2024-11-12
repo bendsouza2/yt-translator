@@ -227,7 +227,7 @@ class Audio:
         :return: A dictionary with a list of definitions
         """
         response = LanguageVerification(self.language_to_learn).get_spanish_dictionary_definition(word=self.word)
-        result = {}
+        result: Dict[str, List[str]] = {}
         for entry in response:
             headword = entry.get('meta', {}).get('id')
             if headword != self.word:
