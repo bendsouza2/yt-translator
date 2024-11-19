@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <h1> {{ currentDate }}</h1>
+  <div class="background-container">
+    <h1> {{ video.upload_date }}</h1>
     <div v-if="video" class="video-container">
         <h2>{{ video.title }}</h2>
         <iframe
@@ -49,7 +49,7 @@ export default {
         const response = await axios.get(`${process.env.VUE_APP_API_BASE_URL}today/api/videos/latest/`)
         this.video = {
             ...response.data,
-            upload_date: new Date(response.data.upload_date).toLocaleDateString("en-GB")
+            upload_date: this.formatDate( new Date(response.data.upload_date) )
         }
             ; 
       } catch (error) {
@@ -62,19 +62,57 @@ export default {
     revealSentence() {
         this.revealed = !this.revealed;
     },
+    formatDate(date) {
+      const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+      const formattedDate = new Intl.DateTimeFormat("en-GB", options).format(date);
+      const day = date.getDate();
+
+      const ordinalSuffix = (n) => {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+      };
+
+      const dayWithOrdinal = ordinalSuffix(day);
+
+      return formattedDate.replace(/\d+/, dayWithOrdinal);
+    },
   },
 };
 </script>
 
 <style scoped>
+.background-container {
+  background-image: linear-gradient(to right, #3b3933 , rgb(66, 46, 1));
+  background-size: cover;
+  padding: 20px;
+  box-sizing: border-box;
+
+}
+
 .video-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     margin-bottom: 20px;
+    animation: animate;
     /* margin-left: auto; */
     /* margin-right: auto; */
+}
+
+@keyframes animate {
+    0% {
+        filter: hue-rotate(0deg);
+    }
+
+    50% {
+        filter: hue-rotate(360deg);
+    }
+
+    100% {
+        filter: hue-rotate(0deg);
+    }
 }
 
 .word {
