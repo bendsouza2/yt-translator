@@ -90,12 +90,12 @@ class VideoSettings:
 
 
 class Paths:
-    WORD_LIST_PATH = "top-10000-spanish-words.txt"  # PROJECT
-    SUBTITLE_DIR_PATH = "subtitles"  # PROJECT
-    AUDIO_DIR_PATH = "audio" # PROJECT
-    IMAGE_DIR_PATH = "images"    # PROJECT
-    NODE_SUBS_FILE_PATH = "node/sync_subtitles.js"   # PROJECT
-    VIDEO_DIR_PATH = "video" # PROJECT
-    GOOGLE_CREDS_PATH = "google_creds.json"  # PROJECT
-    YT_TOKEN_PATH = "python/token.json"  # BASE
-    PYTHON_ENV_FILE = ".env" # PROJECT
+    WORD_LIST_PATH = "top-10000-spanish-words.txt"
+    SUBTITLE_DIR_PATH = "subtitles"
+    AUDIO_DIR_PATH = "audio"
+    IMAGE_DIR_PATH = "images"
+    NODE_SUBS_FILE_PATH = "node/sync_subtitles.js"
+    VIDEO_DIR_PATH = "video"
+    GOOGLE_CREDS_PATH = "google_creds.json"
+    YT_TOKEN_PATH = "python/token.json"
+    PYTHON_ENV_FILE = ".env" 
