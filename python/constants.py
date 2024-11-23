@@ -98,3 +98,4 @@ class Paths:
     VIDEO_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/video"
     GOOGLE_CREDS_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/google_creds.json"
     YT_TOKEN_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/python/token.json"
+    PYTHON_ENV_FILE = "/Users/bendsouza/PycharmProjects/yt_translator/.env"
