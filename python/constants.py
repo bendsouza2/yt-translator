@@ -90,12 +90,12 @@ class VideoSettings:
 
 
 class Paths:
-    WORD_LIST_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/top-10000-spanish-words.txt"
-    SUBTITLE_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/subtitles"
-    AUDIO_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/audio"
-    IMAGE_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/images"
-    NODE_SUBS_FILE_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/node/sync_subtitles.js"
-    VIDEO_DIR_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/video"
-    GOOGLE_CREDS_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/google_creds.json"
-    YT_TOKEN_PATH = "/Users/bendsouza/PycharmProjects/yt_translator/python/token.json"
-    PYTHON_ENV_FILE = "/Users/bendsouza/PycharmProjects/yt_translator/.env"
+    WORD_LIST_PATH = "top-10000-spanish-words.txt"  # PROJECT
+    SUBTITLE_DIR_PATH = "subtitles"  # PROJECT
+    AUDIO_DIR_PATH = "audio" # PROJECT
+    IMAGE_DIR_PATH = "images"    # PROJECT
+    NODE_SUBS_FILE_PATH = "node/sync_subtitles.js"   # PROJECT
+    VIDEO_DIR_PATH = "video" # PROJECT
+    GOOGLE_CREDS_PATH = "google_creds.json"  # PROJECT
+    YT_TOKEN_PATH = "python/token.json"  # BASE
+    PYTHON_ENV_FILE = ".env" # PROJECT

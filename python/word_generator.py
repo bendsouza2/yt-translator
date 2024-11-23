@@ -24,6 +24,7 @@ from PIL import Image
 from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths, TWO_LETTER_MAP
 from python.utils import spanish_syllable_count
 from python.language_verification import LanguageVerification
+import base_config
 
 
 Image.ANTIALIAS = Image.Resampling.LANCZOS  # type: ignore[attr-defined]
@@ -63,7 +64,7 @@ class Audio:
         """
         if filepath is None:
             dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-            filepath = f"{Paths.AUDIO_DIR_PATH}/{dt}.wav"
+            filepath = f"{base_config.BASE_DIR}/{Paths.AUDIO_DIR_PATH}/{dt}.wav"
         tts = gTTS(self.sentence, lang=language)
         tts.save(filepath)
         return filepath
@@ -141,8 +142,9 @@ class Audio:
         :return: The output_file_path that the .srt file was written to if successfully generated, else None
         """
         dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-        output_file_path = f"{Paths.SUBTITLE_DIR_PATH}/{dt}.srt"
-        command = ["node", Paths.NODE_SUBS_FILE_PATH, self.audio_path, sentence, output_file_path]
+        output_file_path = f"{base_config.BASE_DIR}/{Paths.SUBTITLE_DIR_PATH}/{dt}.srt"
+        file_to_execute = f"{base_config.BASE_DIR}/{Paths.NODE_SUBS_FILE_PATH}"
+        command = ["node", file_to_execute, self.audio_path, sentence, output_file_path]
         try:
             result = subprocess.run(command, check=True, capture_output=True, text=True)
         except subprocess.CalledProcessError as e:
@@ -344,7 +346,7 @@ class ImageGenerator:
         filepaths = []
         for url in self.image_urls:
             dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-            output_file_path = f"{Paths.IMAGE_DIR_PATH}/{dt}.jpg"
+            output_file_path = f"{base_config.BASE_DIR}/{Paths.IMAGE_DIR_PATH}/{dt}.jpg"
             img_data = requests.get(url).content
             with open(output_file_path, "wb") as handler:
                 handler.write(img_data)
@@ -577,7 +579,7 @@ class VideoGenerator:
         """
         if output_filepath is None:
             dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-            output_filepath = f"{Paths.VIDEO_DIR_PATH}/{dt}.mp4"
+            output_filepath = f"{base_config.BASE_DIR}/{Paths.VIDEO_DIR_PATH}/{dt}.mp4"
 
         audio_clip = AudioFileClip(self.audio_filepath)
         image_clips = [
