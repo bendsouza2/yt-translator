@@ -5,6 +5,7 @@ from typing import Literal, Final, Dict
 
 LANGUAGE_TO_LEARN = "es"
 NATIVE_LANGUAGE = "en"
+BUCKET_NAME = "bd-yt-translator"
 
 THREE_LETTER_MAP: Final[Dict[str, str]] = {
     "eng": "en",  # English

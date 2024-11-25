@@ -4,6 +4,7 @@ import random
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple, Dict, Sequence
 from pathlib import Path
+from io import BytesIO
 import os
 import re
 import subprocess
@@ -21,9 +22,10 @@ from moviepy.editor import ColorClip, TextClip, CompositeVideoClip, AudioFileCli
 from moviepy.video.tools.subtitles import SubtitlesClip
 from PIL import Image
 
-from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths, TWO_LETTER_MAP
+from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths, TWO_LETTER_MAP, BUCKET_NAME
 from python.utils import spanish_syllable_count
 from python.language_verification import LanguageVerification
+from python.s3_organiser import BucketSort
 import base_config
 
 
@@ -35,14 +37,17 @@ class Audio:
                  word_list_path: str,
                  language_to_learn: str,
                  native_language: str,
+                 cloud_storage: bool = False
                  ):
         """
         Initialise an Audio object
-        :param word_list_path: The file path to the list of words.
+        :param word_list_path: The relative file path to the list of words.
         :param language_to_learn: The language the user is learning.
         :param native_language: The native language of the user.
+        :param cloud_storage: Whether to store the generated files in S3
         """
-        self.file_path = word_list_path
+        self.cloud_storage = cloud_storage
+        self.word_list_path = word_list_path
         self.language_to_learn = language_to_learn
         self.native_language = native_language
         self.text_file = self.read_text_file()
@@ -56,16 +61,39 @@ class Audio:
         self.audio_duration = self.get_audio_duration()
         self.sub_filepath = self.echogarden_generate_subtitles(sentence=self.sentence)
 
+    @property
+    def word_list_path(self):
+        return self._word_list_path
+
+    @word_list_path.setter
+    def word_list_path(self, word_list_path):
+        if self.cloud_storage is True:
+            self._word_list_path = word_list_path
+        else:
+            self._word_list_path = f"{base_config.BASE_DIR}/{word_list_path}"
+
     def text_to_speech(self, language: str, filepath: Optional[str] = None) -> str:
         """
         Generate an audio file
         :param language: The language that the audio should be generated in
         :param filepath: Optional, the filepath to save the resulting .mp3 file to
         """
+        dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
         if filepath is None:
-            dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
             filepath = f"{base_config.BASE_DIR}/{Paths.AUDIO_DIR_PATH}/{dt}.wav"
         tts = gTTS(self.sentence, lang=language)
+
+        if self.cloud_storage:
+            audio_buffer = BytesIO()
+            tts.write_to_fp(audio_buffer)
+            audio_buffer.seek(0)
+
+            s3_key = f"{Paths.AUDIO_DIR_PATH}/{dt}"
+            s3_bucket = BucketSort(bucket=BUCKET_NAME)
+            s3_path = s3_bucket.push_object_to_s3(audio_buffer.read(), s3_key)
+
+            return s3_path
+
         tts.save(filepath)
         return filepath
 
@@ -129,6 +157,11 @@ class Audio:
         repl = "0\\1"
         srt_reformatted = re.sub(pat, repl, srt, 0, re.MULTILINE)
 
+        if self.cloud_storage is True:
+            s3_bucket = BucketSort(bucket=BUCKET_NAME)
+            output_path = s3_bucket.push_object_to_s3(file=srt_reformatted, s3_key="subtitles")
+            return output_path
+
         srtout = os.path.join(os.path.dirname(__file__), "subtitles.srt")
         with open(srtout, "w") as newfile:
             newfile.write(srt_reformatted)
@@ -152,30 +185,49 @@ class Audio:
                 e.returncode, e.cmd, stderr=f"Command failed with exit code {e.returncode}. stderr {e.stderr}"
             )
 
+        if self.cloud_storage is True:
+            s3_bucket = BucketSort(bucket=BUCKET_NAME)
+            s3_path = s3_bucket.push_file_to_s3(file_path=output_file_path,
+                                                s3_key=f"{Paths.SUBTITLE_DIR_PATH}/{dt}.srt")
+            return s3_path
+
         return output_file_path
 
     def read_text_file(self) -> list:
         """
-        Read a text file
+        Read a text file from local or S3 storage.
         :return: list of lines in the text file
         """
-        with open(self.file_path, "r", encoding="utf-8") as file:
-            lines = file.readlines()
+        if self.cloud_storage:
+            s3_bucket = BucketSort(bucket=BUCKET_NAME)
+            file_content = s3_bucket.get_object_from_s3(self.word_list_path)
+            lines = file_content.decode("utf-8").splitlines()
+        else:
+            with open(self.word_list_path, "r", encoding="utf-8") as file:
+                lines = file.readlines()
+
         return [line.strip() for line in lines]
 
-    @staticmethod
-    def remove_word_from_file(file_path: str, word_to_remove: str):
+    def remove_word_from_file(self, file_path: str, word_to_remove: str):
         """Remove a given word from a text file
         :param file_path: Path to the file
         :param word_to_remove: The word to remove from the file
         """
-        with open(file_path, "r", encoding="utf-8") as file:
-            lines = file.readlines()
+        if self.cloud_storage is True:
+            s3_bucket = BucketSort(bucket=BUCKET_NAME)
+            file_content = s3_bucket.get_object_from_s3(file_path)
+            lines = file_content.decode("utf-8").splitlines()
+            updated_lines = [line.strip() for line in lines if line.strip() != word_to_remove]
 
-        lines = [line.strip() for line in lines if line.strip() != word_to_remove]
+            s3_bucket.push_object_to_s3("\n".join(updated_lines).encode("utf-8"), file_path)
+        else:
+            with open(file_path, "r", encoding="utf-8") as file:
+                lines = file.readlines()
 
-        with open(file_path, "w", encoding="utf-8") as file:
-            file.write("\n".join(lines))
+            updated_lines = [line.strip() for line in lines if line.strip() != word_to_remove]
+
+            with open(file_path, "w", encoding="utf-8") as file:
+                file.write("\n".join(updated_lines))
 
     def get_random_word(self) -> str:
         """
@@ -220,7 +272,7 @@ class Audio:
         while real_word is False:
             word = self.get_random_word()
             real_word = LanguageVerification(self.language_to_learn).enchant_real_word(word)
-            self.remove_word_from_file(file_path=self.file_path, word_to_remove=word)
+            self.remove_word_from_file(file_path=self.word_list_path, word_to_remove=word)
         return word, real_word
 
     def get_spanish_definition(self) -> Dict[str, List[str]]:
@@ -292,22 +344,20 @@ class ImageGenerator:
     def __init__(
             self,
             prompts: str | list,
-            local_image_storage: Optional[bool] = True,
-            local_file_path: Optional[str] = None,
-            s3_file_path: Optional[str] = None,
+            cloud_storage: Optional[bool] = False,
     ):
         """
         Initialise an object of the ImageGenerator class
         :param prompts: The prompts to use to create the image
-        :param local_image_storage: Optional. Whether to store the image locally or remotely. Defaults to True
-        :param local_file_path: Optional. The file path if storing the file locally
-        :param s3_file_path: Optional. The file path if storing the file in S3
+        :param cloud_storage: Optional. Whether to store the image locally or remotely. Defaults to False
         """
         self.prompts = prompts
         self.image_urls = self.image_generator()
-        self.image_paths = self.save_image()
-        self.local_image_storage = local_image_storage
-        self._check_valid_image_path()
+        self.cloud_storage = cloud_storage
+        if self.cloud_storage is False:
+            self.image_paths = self.save_image()
+        else:
+            self.image_paths = self.save_image_to_s3()
 
     def call_dalle(self, sentence: str):
         """
@@ -357,19 +407,34 @@ class ImageGenerator:
         """
         Save images to S3
         """
-        raise NotImplementedError
+        s3_paths = []
+        s3_bucket = BucketSort(bucket=BUCKET_NAME)
+
+        count = 0
+        for url in self.image_urls:
+            dt = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+            s3_key = f"{Paths.IMAGE_DIR_PATH}/{dt}_{count}.jpg"
+
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+
+            s3_path = s3_bucket.push_object_to_s3(response.content, s3_key)
+            s3_paths.append(s3_path)
+            count += 1
+
+        return s3_paths
 
     def _check_valid_image_path(self):
         """
         Check the image is saved to a valid location
         """
-        if self.local_image_storage is True:
+        if self.cloud_storage is False:
             for local_image_path in self.image_paths:
                 file_path = Path(local_image_path)
                 if not file_path.is_file():
                     raise ValueError(f"Either the image path you provided could not be located, or an image could not "
                                      f"be found in the default path location.")
-        elif self.local_image_storage is False:
+        elif self.cloud_storage is True:
             raise NotImplementedError
 
 
@@ -383,7 +448,7 @@ class VideoGenerator:
                  image_paths: List[str],
                  audio_filepath: str,
                  subtitles_filepath: str,
-                 local_image_storage: bool = False,
+                 cloud_storage: bool = False,
                  ):
         """
         Initialise a VideoGenerator object
@@ -393,7 +458,8 @@ class VideoGenerator:
         :param image_paths: a list of paths to images to use in the video
         :param audio_filepath: the path to the audio file
         :param subtitles_filepath: the path to the subtitles
-        :param local_image_storage: True if the images are stored locally, False otherwise
+        :param cloud_storage: if True generated videos and related content will be stored in S3, if False the content
+        will be written locally
         """
         self.word = word
         self.sentence = sentence
@@ -401,7 +467,7 @@ class VideoGenerator:
         self.image_paths = image_paths
         self.audio_filepath = audio_filepath
         self.subtitles_filepath = subtitles_filepath
-        self.local_image_storage = local_image_storage
+        self.cloud_storage = cloud_storage
 
     @staticmethod
     def create_subtitle_clip(
@@ -577,13 +643,26 @@ class VideoGenerator:
         :param word_font: The font for the text
         :return: the file path to where the video is written
         """
+        dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
         if output_filepath is None:
-            dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
             output_filepath = f"{base_config.BASE_DIR}/{Paths.VIDEO_DIR_PATH}/{dt}.mp4"
 
-        audio_clip = AudioFileClip(self.audio_filepath)
+        if self.cloud_storage is True:
+            s3_bucket = BucketSort(bucket=BUCKET_NAME)
+            audio_file = s3_bucket.get_object_from_s3(self.audio_filepath)
+            subtitle_file = s3_bucket.get_object_from_s3(self.subtitles_filepath)
+            image_files = []
+            for image_file in self.image_paths:
+                image = s3_bucket.get_object_from_s3(image_file)
+                image_files.append(image)
+        else:
+            audio_file = self.audio_filepath
+            subtitle_file = self.subtitles_filepath
+            image_files = self.image_paths
+
+        audio_clip = AudioFileClip(audio_file)
         image_clips = [
-            ImageClip(image).set_duration(audio_clip.duration / len(self.image_paths)) for image in self.image_paths
+            ImageClip(image).set_duration(audio_clip.duration / len(image_files)) for image in image_files
         ]
 
         word_clip = self.create_fancy_word_clip(
@@ -594,7 +673,7 @@ class VideoGenerator:
             style='bounce'
         )
 
-        subtitles = SubtitlesClip(self.subtitles_filepath, self.create_subtitle_clip)
+        subtitles = SubtitlesClip(subtitle_file, self.create_subtitle_clip)
 
         translated_srt = self.create_translated_subtitles_file(audio_clip.duration)
         translated_subtitles = SubtitlesClip(translated_srt, lambda txt: self.create_subtitle_clip(
@@ -614,18 +693,33 @@ class VideoGenerator:
         ])
 
         final_video.duration = video_clip.duration
-        final_video.write_videofile(
-            output_filepath,
-            fps=24,
-            temp_audiofile="temp-audio.m4a",
-            remove_temp=True,
-            codec="libx264",
-            audio_codec="aac"
-        )
+
+        s3_path = None
+        if self.cloud_storage is True:
+            with tempfile.NamedTemporaryFile(suffix=".mp4", delete=True) as temp_video:
+                final_video.write_videofile(
+                    temp_video.name,
+                    fps=24,
+                    codec="libx264",
+                    audio_codec="aac"
+                )
+                temp_video.seek(0)
+
+                s3_key = f"videos/{dt}.mp4"
+                s3_bucket = BucketSort(bucket=BUCKET_NAME)
+                s3_path = s3_bucket.push_object_to_s3(temp_video.read(), s3_key)
+
+        else:
+            final_video.write_videofile(
+                output_filepath,
+                fps=24,
+                codec="libx264",
+                audio_codec="aac"
+            )
 
         os.unlink(translated_srt)
 
-        # Close clips to free up resources
+        # Close resources
         audio_clip.close()
         subtitles.close()
         translated_subtitles.close()
@@ -634,7 +728,7 @@ class VideoGenerator:
         for clip in image_clips:
             clip.close()
 
-        return output_filepath
+        return s3_path if s3_path is not None else output_filepath
 
     def generate_video_title(self, language: str) -> str:
         """

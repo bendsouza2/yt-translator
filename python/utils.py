@@ -1,4 +1,7 @@
 """Module containing utility functions for use across the project"""
+import os
+
+import boto3
 
 def spanish_syllable_count(word: str) -> int:
     """
@@ -27,6 +30,21 @@ def remove_trailing_slash(string_to_check: str) -> str:
     if string_to_check.endswith("/"):
         string_to_check = string_to_check[: -1]
     return string_to_check
+
+
+def is_running_on_aws() -> bool:
+    """
+    Determine if the code is running in an AWS environment by checking for the existence of the 'AWS_EXECUTION_ENV'
+    variable
+    :return: True if running in an AWS env, else False
+    """
+    return os.getenv("AWS_EXECUTION_ENV") is not None
+
+
+def upload_to_s3(file_path: str, bucket_name: str, s3_key):
+    s3 = boto3.client('s3')
+    s3.upload_file(file_path, bucket_name, s3_key)
+    return f"s3://{bucket_name}/{s3_key}"
 
 
 def fix_accented_string(input_string: str) -> str:

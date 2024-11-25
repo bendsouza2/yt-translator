@@ -14,7 +14,7 @@ def process_video_and_upload() -> Dict[str, str]:
     video is based on
     """
     audio_generator = Audio(
-        word_list_path=f"{base_config.BASE_DIR}/{Paths.WORD_LIST_PATH}",
+        word_list_path=Paths.WORD_LIST_PATH,
         language_to_learn=LANGUAGE_TO_LEARN,
         native_language=NATIVE_LANGUAGE
     )
