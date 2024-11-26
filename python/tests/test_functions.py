@@ -28,7 +28,7 @@ class TestWordGenerator(unittest.TestCase):
 
         cls.mock_google_translator.return_value.translate.return_value = "Translated sentence"
         cls.audio = Audio(
-            word_list_path=os.path.join(os.path.dirname(__file__), "test_word_list.txt"),
+            word_list_path="python/tests/test_word_list.txt",
             language_to_learn="es",
             native_language="en"
         )
@@ -69,7 +69,7 @@ class TestWordGenerator(unittest.TestCase):
         """Test that a ValueError is raised when trying to get a word from an empty text file"""
         with self.assertRaises(ValueError):
             empty_file_path = Audio(
-                word_list_path=os.path.join(os.path.dirname(__file__), "empty_file.txt"),
+                word_list_path="python/tests/empty_file.txt",
                 language_to_learn="es",
                 native_language="en"
             )

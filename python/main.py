@@ -4,7 +4,6 @@ from datetime import datetime
 from python.word_generator import Audio, ImageGenerator, VideoGenerator
 from python.yt_uploader import YTConnector
 from python.constants import Paths, LANGUAGE_TO_LEARN, NATIVE_LANGUAGE, Prompts
-import base_config
 
 
 def process_video_and_upload() -> Dict[str, str]:
@@ -14,9 +13,10 @@ def process_video_and_upload() -> Dict[str, str]:
     video is based on
     """
     audio_generator = Audio(
-        word_list_path=f"{base_config.BASE_DIR}/{Paths.WORD_LIST_PATH}",
+        word_list_path=Paths.WORD_LIST_PATH,
         language_to_learn=LANGUAGE_TO_LEARN,
-        native_language=NATIVE_LANGUAGE
+        native_language=NATIVE_LANGUAGE,
+        cloud_storage=True,
     )
 
     print(audio_generator.word)
@@ -27,6 +27,7 @@ def process_video_and_upload() -> Dict[str, str]:
 
     image_generator = ImageGenerator(
         prompts=prompt,
+        cloud_storage=True,
     )
 
     video_generator = VideoGenerator(
@@ -35,14 +36,16 @@ def process_video_and_upload() -> Dict[str, str]:
         translated_sentence=audio_generator.translated_sentence,
         image_paths=image_generator.image_paths,
         audio_filepath=audio_generator.audio_path,
-        subtitles_filepath=audio_generator.sub_filepath
+        subtitles_filepath=audio_generator.sub_filepath,
+        cloud_storage=True,
     )
 
     video_filepath = video_generator.generate_video()
     video_metadata = video_generator.generate_video_metadata(language_code=LANGUAGE_TO_LEARN)
 
     yt = YTConnector(
-        credentials_env=True
+        credentials_env=True,
+        cloud_storage=True,
     )
     upload_details = yt.upload_youtube_short(
         video_path=video_filepath,

@@ -8,7 +8,9 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from googleapiclient.http import MediaFileUpload
 
-from python.constants import EnvVariables
+from python.constants import EnvVariables, BUCKET_NAME
+from python.s3_organiser import BucketSort
+from python import utils
 
 
 load_dotenv()
@@ -21,14 +23,17 @@ class YTConnector:
             self,
             credentials_path: Optional[str] = None,
             credentials_env: bool = False,
+            cloud_storage: bool = False,
     ):
         """
         Initialise a YTConnector object
         :param credentials_path: Optional. The absolute path to the credentials
         :param credentials_env: If true, the credentials will be loaded from the 'YOUTUBE_CREDENTIALS' env variable
+        :param cloud_storage: True if the videos and related content are stored in S3, False otherwise
         """
         self.credentials_path = credentials_path
         self.credentials_env = credentials_env  # type: ignore[assignment]
+        self.cloud_storage = cloud_storage
         self.credentials = self.get_yt_credentials()
         self.youtube_client = self.build_yt_client()
 
@@ -111,8 +116,14 @@ class YTConnector:
         :param made_for_kids: if the video is target at kids, defaults to False,
         :return: a dictionary with the response from the API
         """
-        if not os.path.exists(video_path):
-            raise FileNotFoundError(f"Video file not found: {video_path}")
+        if self.cloud_storage is True:
+            s3_bucket = BucketSort(bucket=BUCKET_NAME)
+            video_bytes = s3_bucket.get_object_from_s3(s3_key=video_path)
+            video = utils.write_bytes_to_local_temp_file(bytes_object=video_bytes, suffix="mp4", delete_file=False)
+        else:
+            video = video_path
+            if not os.path.exists(video_path):
+                raise FileNotFoundError(f"Video file not found: {video_path}")
 
         status = "private" if private_video is True else "public"
         body = {
@@ -129,7 +140,7 @@ class YTConnector:
         }
 
         media = MediaFileUpload(
-            video_path,
+            video,
             mimetype='video/*',
             resumable=True,
             chunksize=1024 * 1024  # 1MB chunks
@@ -147,6 +158,9 @@ class YTConnector:
 
         video_id = response['id']
         video_url = f"https://youtube.com/shorts/{video_id}"
+
+        if self.cloud_storage is True:
+            utils.remove_temp_file(video)
 
         print(f"Upload Complete! Short URL: {video_url}")
         return response

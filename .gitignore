@@ -40,3 +40,5 @@ python/token.json
 
 #misc
 node/video_generator.js
+video_generator.py
+delete.py
