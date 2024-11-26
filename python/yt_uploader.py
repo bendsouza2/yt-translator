@@ -10,6 +10,7 @@ from googleapiclient.http import MediaFileUpload
 
 from python.constants import EnvVariables, BUCKET_NAME
 from python.s3_organiser import BucketSort
+from python import utils
 
 
 load_dotenv()
@@ -117,7 +118,8 @@ class YTConnector:
         """
         if self.cloud_storage is True:
             s3_bucket = BucketSort(bucket=BUCKET_NAME)
-            video = s3_bucket.get_object_from_s3(s3_key=video_path)
+            video_bytes = s3_bucket.get_object_from_s3(s3_key=video_path)
+            video = utils.write_bytes_to_local_temp_file(bytes_object=video_bytes, suffix="mp4", delete_file=False)
         else:
             video = video_path
             if not os.path.exists(video_path):
@@ -156,6 +158,9 @@ class YTConnector:
 
         video_id = response['id']
         video_url = f"https://youtube.com/shorts/{video_id}"
+
+        if self.cloud_storage is True:
+            utils.remove_temp_file(video)
 
         print(f"Upload Complete! Short URL: {video_url}")
         return response
