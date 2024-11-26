@@ -7,7 +7,7 @@ from typing import Union, IO
 import boto3
 from botocore.exceptions import ClientError
 
-import utils
+from python import utils
 
 dotenv.load_dotenv()
 
