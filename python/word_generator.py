@@ -25,8 +25,8 @@ from PIL import Image
 from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths, TWO_LETTER_MAP, BUCKET_NAME
 from python.language_verification import LanguageVerification
 from python.s3_organiser import BucketSort
+from python import utils
 import base_config
-import utils
 
 
 Image.ANTIALIAS = Image.Resampling.LANCZOS  # type: ignore[attr-defined]
