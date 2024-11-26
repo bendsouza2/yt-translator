@@ -198,7 +198,7 @@ class Audio:
         Read a text file from local or S3 storage.
         :return: list of lines in the text file
         """
-        if self.cloud_storage:
+        if self.cloud_storage is True:
             s3_bucket = BucketSort(bucket=BUCKET_NAME)
             file_content = s3_bucket.get_object_from_s3(self.word_list_path)
             lines = file_content.decode("utf-8").splitlines()
