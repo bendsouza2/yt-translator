@@ -1,6 +1,7 @@
 """Module for managing file storage in S3"""
 
 import os
+import dotenv
 from typing import Union, IO
 
 import boto3
@@ -8,13 +9,15 @@ from botocore.exceptions import ClientError
 
 import utils
 
-if (public_key := os.getenv("aws_public_key") is not None) and (
-        secret_key := os.getenv("aws_secret_key") is not None):
+dotenv.load_dotenv()
+
+if (public_key := os.getenv("AWS_PUBLIC_KEY") is not None) and (
+        secret_key := os.getenv("AWS_SECRET_KEY") is not None):
     session = boto3.Session(
         aws_access_key_id=public_key,
         aws_secret_access_key=secret_key,
     )
-else:
+elif os.getenv("AWS_PROFILE_NAME") is not None:
     session = boto3.Session(
         profile_name=os.getenv("AWS_PROFILE_NAME")
     )

@@ -23,10 +23,10 @@ from moviepy.video.tools.subtitles import SubtitlesClip
 from PIL import Image
 
 from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths, TWO_LETTER_MAP, BUCKET_NAME
-from python.utils import spanish_syllable_count
 from python.language_verification import LanguageVerification
 from python.s3_organiser import BucketSort
 import base_config
+import utils
 
 
 Image.ANTIALIAS = Image.Resampling.LANCZOS  # type: ignore[attr-defined]
@@ -113,7 +113,7 @@ class Audio:
         """
         sentence_count = 0
         for word in self.sentence:
-            word_count = spanish_syllable_count(word)
+            word_count = utils.spanish_syllable_count(word)
             sentence_count += word_count
         return sentence_count
 
@@ -129,7 +129,7 @@ class Audio:
         phrase = []
         phrase_time = 0.0
         for index, word in enumerate(words):
-            syllable_count = spanish_syllable_count(word)
+            syllable_count = utils.spanish_syllable_count(word)
             phrase_time += syllable_count * syllables_per_second
             if phrase_time < subtitle_length:
                 phrase.append(word)
@@ -649,11 +649,20 @@ class VideoGenerator:
 
         if self.cloud_storage is True:
             s3_bucket = BucketSort(bucket=BUCKET_NAME)
-            audio_file = s3_bucket.get_object_from_s3(self.audio_filepath)
-            subtitle_file = s3_bucket.get_object_from_s3(self.subtitles_filepath)
+            audio_bytes = s3_bucket.get_object_from_s3(self.audio_filepath)
+            audio_file = utils.write_bytes_to_local_temp_file(
+                bytes_object=audio_bytes, suffix=".wav", delete_file=False
+            )
+            subtitle_bytes = s3_bucket.get_object_from_s3(self.subtitles_filepath)
+            subtitle_file = utils.write_bytes_to_local_temp_file(
+                bytes_object=subtitle_bytes, suffix=".srt", delete_file=False
+            )
             image_files = []
             for image_file in self.image_paths:
-                image = s3_bucket.get_object_from_s3(image_file)
+                image_bytes = s3_bucket.get_object_from_s3(image_file)
+                image = utils.write_bytes_to_local_temp_file(
+                    bytes_object=image_bytes, suffix=".jpg", delete_file=False
+                )
                 image_files.append(image)
         else:
             audio_file = self.audio_filepath
@@ -705,9 +714,14 @@ class VideoGenerator:
                 )
                 temp_video.seek(0)
 
-                s3_key = f"videos/{dt}.mp4"
+                s3_key = f"{Paths.VIDEO_DIR_PATH}/{dt}.mp4"
                 s3_bucket = BucketSort(bucket=BUCKET_NAME)
                 s3_path = s3_bucket.push_object_to_s3(temp_video.read(), s3_key)
+
+                utils.remove_temp_file(audio_file)
+                utils.remove_temp_file(subtitle_file)
+                for tmp_image_to_remove in image_files:
+                    utils.remove_temp_file(tmp_image_to_remove)
 
         else:
             final_video.write_videofile(

@@ -1,7 +1,7 @@
 """Module containing utility functions for use across the project"""
 import os
+import tempfile
 
-import boto3
 
 def spanish_syllable_count(word: str) -> int:
     """
@@ -41,10 +41,28 @@ def is_running_on_aws() -> bool:
     return os.getenv("AWS_EXECUTION_ENV") is not None
 
 
-def upload_to_s3(file_path: str, bucket_name: str, s3_key):
-    s3 = boto3.client('s3')
-    s3.upload_file(file_path, bucket_name, s3_key)
-    return f"s3://{bucket_name}/{s3_key}"
+def write_bytes_to_local_temp_file(bytes_object: bytes, suffix: str, delete_file: bool = False) -> str:
+    """
+    Write a bytes object to the local file system temporarily
+    :param bytes_object:
+    :param suffix:
+    :param delete_file:
+    :return:
+    """
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=delete_file) as temp_file:
+        temp_file.write(bytes_object)
+        temp_file_path = temp_file.name
+    return temp_file_path
+
+
+def remove_temp_file(temp_file_path: str) -> bool:
+    """
+    Remove a temporary file from the local file system
+    :param temp_file_path: The path to the temporary file
+    :return: True if the file has been removed, False if it still exists
+    """
+    os.remove(temp_file_path)
+    return not os.path.exists(temp_file_path)
 
 
 def fix_accented_string(input_string: str) -> str:
