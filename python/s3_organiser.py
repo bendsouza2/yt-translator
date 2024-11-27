@@ -93,7 +93,7 @@ class BucketSort:
         try:
             self.s3_client.upload_file(file_path, self.s3_bucket, s3_key)
             print(f"Successfully uploaded {file_path} to {self.s3_bucket}/{s3_key}")
-            return f"{self.s3_bucket}/{s3_key}"
+            return s3_key
         except ClientError as e:
             print(f"Failed to upload {file_path} to {self.s3_bucket}/{s3_key}. Error: {e}")
             raise
@@ -108,6 +108,5 @@ class BucketSort:
         if isinstance(file, str):
             file = file.encode("utf-8")
         self.bucket_resource.put_object(Body=file, Key=s3_key)
-        return f"{self.s3_bucket}/{s3_key}"
-
+        return s3_key
 
