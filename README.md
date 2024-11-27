@@ -12,8 +12,14 @@ The project is currently still in development and is not yet in mainenance mode.
 	* Configure the environment variables by opening the shell config file (~/.bashrc or ~/.zshrc) and adding the lines:
 	 	* `export DYLD_LIBRARY_PATH="<PATH_TO_ENCHANT_INSTALL>:$DYLD_LIBRARY_PATH"`
 	 	* `export ENCHANT_LIBRARY_PATH="<PATH_TO_ENCHANT_INSTALL>"`
-3. Configure environment variables:
+3. Configure other environment variables:
 	* `OPENAI_API_KEY = <YOUR_API_KEY>`
+	* `AWS_PUBLIC_KEY = <YOUR_KEY>`
+		* This is the public key for the IAM role.
+	* `AWS_SECRET_KEY = <YOUR_KEY>`
+		* This is the secret key for the IAM role.
+	* `YOUTUBE_CREDENTIALS = <OAUTH_CREDS>`
+		* This is the OAUTH creds stored in JSON format for accessing the associated YouTube account
 4. Run `npm install` to install the Node.js dependencies (echogarden)
 5. In the constants.py file:
 	* Set the LANGUAGE_TO_LEARN variable to the language you want to publish language learning videos for: e.g. `LANGUAGE_TO_LEARN = "es`
