@@ -1,5 +1,4 @@
-import os
-from typing import Dict, Callable
+from typing import Dict, Callable, Optional
 from datetime import datetime
 
 from python.word_generator import Audio, ImageGenerator, VideoGenerator
@@ -7,7 +6,7 @@ from python.yt_uploader import YTConnector
 from python.constants import Paths, LANGUAGE_TO_LEARN, NATIVE_LANGUAGE, Prompts
 
 
-def process_video_and_upload(db_write_function: Callable[[Dict[str, str]], None] = None) -> Dict[str, str]:
+def process_video_and_upload(db_write_function: Optional[Callable[[Dict[str, str]], None]] = None) -> Dict[str, str]:
     """
     Combines the main functionality to generate audio and video for a random word and upload it to YouTube.
     Optionally writes metadata to a database using `db_write_function`.
@@ -38,8 +37,8 @@ def process_video_and_upload(db_write_function: Callable[[Dict[str, str]], None]
     yt = YTConnector(credentials_env=True, cloud_storage=True)
     upload_details = yt.upload_youtube_short(
         video_path=video_filepath,
-        title=video_metadata["title"],
-        description=video_metadata["description"],
+        title=str(video_metadata["title"]),
+        description=str(video_metadata["description"]),
         tags=video_metadata["tags"],
     )
 

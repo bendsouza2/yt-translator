@@ -7,6 +7,7 @@ import MySQLdb
 def write_to_db(video_details: Dict[str, str]) -> None:
     """
     Writes video metadata to a MySQL database using mysqlclient (MySQLdb).
+    :param video_details: Dictionary containing the data to write to the DB
     """
     connection = None
     try:

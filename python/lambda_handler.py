@@ -13,7 +13,7 @@ logger.setLevel(logging.INFO)
 
 def lambda_handler():
     """
-    Lambda entry point to process video, upload to YouTube, and store metadata.
+    Lambda entry point to process video, upload to YouTube, and write metadata to db.
     """
     try:
         required_env_vars = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"]
