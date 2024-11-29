@@ -18,7 +18,7 @@ def lambda_handler():
     try:
         required_env_vars = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"]
         missing_vars = [var for var in required_env_vars if not os.getenv(var)]
-        if missing_vars:
+        if len(missing_vars) > 0:
             raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
         video_details = process_video_and_upload(db_write_function=write_to_db)
