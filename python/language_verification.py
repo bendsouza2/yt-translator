@@ -4,7 +4,6 @@ import os
 from typing import Dict
 
 import requests
-import spacy
 import enchant
 
 from python.constants import URLs
@@ -42,21 +41,6 @@ class LanguageVerification:
             return False
         else:
             return True
-
-    def spacy_real_word(self, model: str, word: str) -> bool:
-        """
-        Test a word is real using Spacy. For more info see https://spacy.io/
-        :param model: The model to use to help identify the word
-        :param word: The word to test
-        :return: True if the word exists for the given language, False if not
-        """
-
-        if model is None:
-            model = f"{self.language}_core_news_sm"
-
-        language = spacy.load(model)
-        doc = language(word)
-        return doc[0].is_alpha and not doc[0].is_stop
 
     def enchant_real_word(self, word: str) -> bool:
         """
