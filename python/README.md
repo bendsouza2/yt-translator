@@ -1,5 +1,5 @@
 ## Overview
-This readme documents how to implement the video upload functionality. For a general project overview, including website setup, see the (main documentation)[https://github.com/bendsouza2/yt-translator]
+This readme documents how to implement the video upload functionality. For a general project overview, including website setup, see the [main documentation](https://github.com/bendsouza2/yt-translator)
 
 ## Video Creation
 Videos are created and uploaded by a Lambda function which runs once a day. This function:
@@ -18,6 +18,6 @@ To customise the project and deploy the video creation capabilities, complete th
 		* Set the NATIVE_LANGUAGE variable to the language which should be used as a base language to learn the secondary language from: e.g. NATIVE_LANGUAGE = "en"
 	3. Build the docker image, in the base directory run:
 		* `docker build -t <IMAGE_NAME> -f python/Dockerfile .`
-	4. Push the docker image to ECR. Assuming you have (configured your AWS CLI profile)[https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html] and setup the ECR repo, run:
+	4. Push the docker image to ECR. Assuming you have [configured your AWS CLI profile](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html) and setup the ECR repo, run:
 		* `docker tag <REPO_NAME/IMAGE_NAME> <LINK_TO_REPO/IMAGE_NAME>`
 		* `docker push <LINK_TO_REPO/IMAGE_NAME>`
