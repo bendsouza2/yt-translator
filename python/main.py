@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Callable, Optional
 from datetime import datetime
 
 from python.word_generator import Audio, ImageGenerator, VideoGenerator
@@ -6,11 +6,11 @@ from python.yt_uploader import YTConnector
 from python.constants import Paths, LANGUAGE_TO_LEARN, NATIVE_LANGUAGE, Prompts
 
 
-def process_video_and_upload() -> Dict[str, str]:
+def process_video_and_upload(db_write_function: Optional[Callable[[Dict[str, str]], None]] = None) -> Dict[str, str]:
     """
-    Combines the main functionality of the project to generate audio and video for a random word
-    :return: a dictionary with the ID of the uploaded video, and the word, sentence and translated sentence that the
-    video is based on
+    Combines the main functionality to generate audio and video for a random word and upload it to YouTube.
+    Optionally writes metadata to a database using `db_write_function`.
+    :param db_write_function: Write video metadata to a RDB
     """
     audio_generator = Audio(
         word_list_path=Paths.WORD_LIST_PATH,
@@ -19,16 +19,8 @@ def process_video_and_upload() -> Dict[str, str]:
         cloud_storage=True,
     )
 
-    print(audio_generator.word)
-    print(audio_generator.sentence)
-    print(audio_generator.translated_sentence)
-
     prompt = Prompts.IMAGE_GENERATOR + audio_generator.sentence
-
-    image_generator = ImageGenerator(
-        prompts=prompt,
-        cloud_storage=True,
-    )
+    image_generator = ImageGenerator(prompts=prompt, cloud_storage=True)
 
     video_generator = VideoGenerator(
         word=audio_generator.word,
@@ -43,22 +35,17 @@ def process_video_and_upload() -> Dict[str, str]:
     video_filepath = video_generator.generate_video()
     video_metadata = video_generator.generate_video_metadata(language_code=LANGUAGE_TO_LEARN)
 
-    yt = YTConnector(
-        credentials_env=True,
-        cloud_storage=True,
-    )
+    yt = YTConnector(credentials_env=True, cloud_storage=True)
     upload_details = yt.upload_youtube_short(
         video_path=video_filepath,
-        title=video_metadata["title"],  # type: ignore[arg-type]
-        description=video_metadata["description"],  # type: ignore[arg-type]
-        tags=video_metadata["tags"]
+        title=str(video_metadata["title"]),
+        description=str(video_metadata["description"]),
+        tags=video_metadata["tags"],
     )
 
     video_id = upload_details["id"]
-    thumbnail_url = upload_details["snippet"]["thumbnails"]["default"]["url"]
     upload_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    print(video_id)
     response = {
         "video_id": video_id,
         "word": audio_generator.word,
@@ -67,6 +54,10 @@ def process_video_and_upload() -> Dict[str, str]:
         "title": video_metadata["title"],
         "description": video_metadata["description"],
         "upload_time": upload_time,
-        "thumbnail_url": thumbnail_url
+        "thumbnail_url": upload_details["snippet"]["thumbnails"]["default"]["url"],
     }
+
+    if db_write_function is True:
+        db_write_function(response)
+
     return response

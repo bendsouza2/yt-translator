@@ -36,4 +36,4 @@ jobs:
         pytest -vvv
     - name: type check with mypy
       run: |
-        mypy -v .
+        mypy .
