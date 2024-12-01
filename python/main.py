@@ -10,6 +10,7 @@ def process_video_and_upload(db_write_function: Optional[Callable[[Dict[str, str
     """
     Combines the main functionality to generate audio and video for a random word and upload it to YouTube.
     Optionally writes metadata to a database using `db_write_function`.
+    :param db_write_function: Write video metadata to a RDB
     """
     audio_generator = Audio(
         word_list_path=Paths.WORD_LIST_PATH,
