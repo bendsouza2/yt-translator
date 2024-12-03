@@ -4,6 +4,7 @@ import os
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 from constants import Paths, EnvVariables
+import base_config
 
 SCOPES = [
     "https://www.googleapis.com/auth/youtube",
@@ -13,10 +14,23 @@ SCOPES = [
 ]
 
 flow = InstalledAppFlow.from_client_secrets_file(
-    Paths.GOOGLE_CREDS_PATH, SCOPES
+    f"{base_config.BASE_DIR}/{Paths.GOOGLE_CREDS_PATH}", SCOPES
 )
 
-creds = flow.run_local_server(port=8080)
+creds = flow.run_local_server(
+    port=8080,
+    prompt='consent',
+    authorization_prompt_message='Please authorize access to YouTube',
+    authorization_code_message='Enter the authorization code from the link above'
+)
+
+if not creds.refresh_token:
+    flow.oauth2session.params['access_type'] = 'offline'
+    flow.oauth2session.params['prompt'] = 'consent'
+    creds = flow.run_local_server(
+        port=8080,
+        prompt='consent'
+    )
 
 print("Access Token:", creds.token)
 print("Refresh Token:", creds.refresh_token)
@@ -25,13 +39,13 @@ print("Client ID:", creds.client_id)
 print("Client Secret:", creds.client_secret)
 
 
-with open(Paths.YT_TOKEN_PATH, "w") as token_file:
+with open(f"{base_config.BASE_DIR}/{Paths.YT_TOKEN_PATH}", "w") as token_file:
     token_file.write(creds.to_json())
 
-new_env_line = f'{EnvVariables.YOUTUBE_CREDENTIALS}="{creds.to_json()}"\n'
+new_env_line = f'{EnvVariables.YOUTUBE_CREDENTIALS}={creds.to_json()}\n'
 
-if os.path.exists(Paths.PYTHON_ENV_FILE):
-    with open(Paths.PYTHON_ENV_FILE, "r") as file:
+if os.path.exists(f"{base_config.BASE_DIR}/{Paths.PYTHON_ENV_FILE}"):
+    with open(f"{base_config.BASE_DIR}/{Paths.PYTHON_ENV_FILE}", "r") as file:
         lines = file.readlines()
 
     updated = False
@@ -44,8 +58,8 @@ if os.path.exists(Paths.PYTHON_ENV_FILE):
     if not updated:
         lines.append(new_env_line)
 
-    with open(Paths.PYTHON_ENV_FILE, "w") as file:
+    with open(f"{base_config.BASE_DIR}/{Paths.PYTHON_ENV_FILE}", "w") as file:
         file.writelines(lines)
 else:
-    with open(Paths.PYTHON_ENV_FILE, "w") as file:
+    with open(f"{base_config.BASE_DIR}/{Paths.PYTHON_ENV_FILE}", "w") as file:
         file.write(new_env_line)

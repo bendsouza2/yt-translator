@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from googleapiclient.http import MediaFileUpload
+from google.auth.transport.requests import Request
 
 from python.constants import EnvVariables, BUCKET_NAME
 from python.s3_organiser import BucketSort
@@ -87,6 +88,9 @@ class YTConnector:
             client_secret=cred_data['client_secret'],
             scopes=cred_data['scopes']
         )
+
+        if creds.expired and creds.refresh_token:
+            creds.refresh(Request())
 
         return creds
 
