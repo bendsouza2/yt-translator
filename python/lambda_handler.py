@@ -1,6 +1,7 @@
 import os
 import logging
 import traceback
+from typing import Dict, Any
 
 import MySQLdb
 
@@ -11,9 +12,13 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def lambda_handler():
+def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
     """
     Lambda entry point to process video, upload to YouTube, and write metadata to db.
+    :param event: The event data passed to the lambda function
+    :param context: The context object providing runtime information about the Lambda execution, such as the function
+    name, request ID and remaining execution time.
+    :returns: A dictionary with a `statusCode` and `body` containing the result of the Lambda execution.
     """
     try:
         required_env_vars = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"]
