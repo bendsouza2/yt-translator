@@ -4,7 +4,17 @@ WORKDIR /var/task
 
 # Install system dependencies
 RUN yum update -y && \
-    yum install -y wget gnupg gcc python3-devel mysql-devel mariadb-devel libsndfile ffmpeg && \
+    yum install -y \
+    wget \
+    gnupg \
+    gcc \
+    python3-devel \
+    mysql-devel \
+    mariadb-devel \
+    libsndfile \
+    ffmpeg \
+    enchant-devel \   
+    make && \
     yum clean all
 
 # Install Python dependencies
@@ -14,4 +24,4 @@ RUN pip install --no-cache-dir -r /var/task/requirements.txt
 # Copy application code
 COPY . /var/task
 
-CMD ["lambda_handler.lambda_handler"]
+CMD ["python.lambda_handler.lambda_handler"]
