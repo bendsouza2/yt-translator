@@ -11,7 +11,9 @@ from python import utils
 
 dotenv.load_dotenv()
 
-if (public_key := os.getenv("AWS_PUBLIC_KEY") is not None) and (
+if utils.is_running_on_aws() is True:
+    session = boto3.Session()
+elif (public_key := os.getenv("AWS_PUBLIC_KEY") is not None) and (
         secret_key := os.getenv("AWS_SECRET_KEY") is not None):
     session = boto3.Session(
         aws_access_key_id=public_key,
