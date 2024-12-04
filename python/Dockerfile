@@ -2,7 +2,7 @@ FROM public.ecr.aws/lambda/python:3.10-arm64
 
 WORKDIR /var/task
 
-# Install system dependencies (including enchant C library and build tools)
+# Install system dependencies
 RUN yum update -y && \
     yum install -y \
     wget \
