@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r /var/task/requirements.txt
 # Copy application code
 COPY . /var/task
 
-CMD ["lambda_handler.lambda_handler"]
+CMD ["python.lambda_handler.lambda_handler"]
