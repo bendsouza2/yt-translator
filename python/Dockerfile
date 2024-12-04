@@ -2,9 +2,19 @@ FROM public.ecr.aws/lambda/python:3.10-arm64
 
 WORKDIR /var/task
 
-# Install system dependencies
+# Install system dependencies (including enchant C library and build tools)
 RUN yum update -y && \
-    yum install -y wget gnupg gcc python3-devel mysql-devel mariadb-devel libsndfile ffmpeg && \
+    yum install -y \
+    wget \
+    gnupg \
+    gcc \
+    python3-devel \
+    mysql-devel \
+    mariadb-devel \
+    libsndfile \
+    ffmpeg \
+    enchant-devel \   
+    make && \
     yum clean all
 
 # Install Python dependencies
