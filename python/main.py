@@ -22,13 +22,19 @@ def process_video_and_upload(db_write_function: Optional[Callable[[Dict[str, str
     prompt = Prompts.IMAGE_GENERATOR + audio_generator.sentence
     image_generator = ImageGenerator(prompts=prompt, cloud_storage=True)
 
+    if audio_generator.cloud_storage is True:
+        audio_file = audio_generator.audio_cloud_path
+    else:
+        audio_file = audio_generator.audio_path
+
+    if audio_file is None:
+        raise TypeError(f"audio_file must be a string")
     video_generator = VideoGenerator(
         word=audio_generator.word,
         sentence=audio_generator.sentence,
         translated_sentence=audio_generator.translated_sentence,
         image_paths=image_generator.image_paths,
-        audio_filepath=audio_generator.audio_path,
-        subtitles_filepath=audio_generator.sub_filepath,
+        audio_filepath=audio_file,
         cloud_storage=True,
     )
 

@@ -99,4 +99,5 @@ class Paths:
     VIDEO_DIR_PATH = "video"
     GOOGLE_CREDS_PATH = "google_creds.json"
     YT_TOKEN_PATH = "python/token.json"
-    PYTHON_ENV_FILE = ".env" 
+    PYTHON_ENV_FILE = ".env"
+    FONT_PATH = "/usr/share/fonts/liberation/LiberationSans-Regular.ttf"

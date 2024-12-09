@@ -26,12 +26,14 @@ from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths, TW
 from python.language_verification import LanguageVerification
 from python.s3_organiser import BucketSort
 from python import utils
+from python import custom_logging
 import base_config
 
 
 Image.ANTIALIAS = Image.Resampling.LANCZOS  # type: ignore[attr-defined]
 
 
+@custom_logging.log_all_methods
 class Audio:
     def __init__(self,
                  word_list_path: str,
@@ -57,9 +59,9 @@ class Audio:
         self.translated_sentence = self.google_translate(
             source_language=self.language_to_learn, target_language=self.native_language
         )
-        self.audio_path = self.text_to_speech(language=self.language_to_learn)
-        self.audio_duration = self.get_audio_duration()
-        self.sub_filepath = self.echogarden_generate_subtitles(sentence=self.sentence)
+        self.audio_duration: Optional[float] = None
+        self.audio_path, self.audio_cloud_path = self.text_to_speech(language=self.language_to_learn)
+        self.sub_filepath = None
 
     @property
     def word_list_path(self):
@@ -72,15 +74,17 @@ class Audio:
         else:
             self._word_list_path = f"{base_config.BASE_DIR}/{word_list_path}"
 
-    def text_to_speech(self, language: str, filepath: Optional[str] = None) -> str:
+    def text_to_speech(self, language: str, filepath: Optional[str] = None) -> Tuple[str | None, str | None]:
         """
         Generate an audio file
         :param language: The language that the audio should be generated in
         :param filepath: Optional, the filepath to save the resulting .mp3 file to
         """
         dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-        if filepath is None:
+        if filepath is None and self.cloud_storage is False:
             filepath = f"{base_config.BASE_DIR}/{Paths.AUDIO_DIR_PATH}/{dt}.wav"
+        elif filepath is None and self.cloud_storage is True:
+            filepath = f"/tmp/{dt}.wav"
         tts = gTTS(self.sentence, lang=language)
 
         if self.cloud_storage:
@@ -88,14 +92,14 @@ class Audio:
             tts.write_to_fp(audio_buffer)
             audio_buffer.seek(0)
 
-            s3_key = f"{Paths.AUDIO_DIR_PATH}/{dt}"
+            s3_key = f"{Paths.AUDIO_DIR_PATH}/{dt}.wav"
             s3_bucket = BucketSort(bucket=BUCKET_NAME)
             s3_path = s3_bucket.push_object_to_s3(audio_buffer.read(), s3_key)
-
-            return s3_path
+        else:
+            s3_path = None
 
         tts.save(filepath)
-        return filepath
+        return filepath, s3_path
 
     def get_audio_duration(self) -> float:
         """
@@ -122,6 +126,8 @@ class Audio:
         Writes the sentence to a .srt subtitle file
         :param total_syllable_count: The total number of syllables in the audio
         """
+        if self.audio_duration is None:
+            self.audio_duration = self.get_audio_duration()
         syllables_per_second = self.audio_duration / total_syllable_count
         subtitle_length = 3
         words = self.sentence.split(" ")
@@ -175,15 +181,25 @@ class Audio:
         :return: The output_file_path that the .srt file was written to if successfully generated, else None
         """
         dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-        output_file_path = f"{base_config.BASE_DIR}/{Paths.SUBTITLE_DIR_PATH}/{dt}.srt"
+        if self.cloud_storage is False:
+            output_file_path = f"{base_config.BASE_DIR}/{Paths.SUBTITLE_DIR_PATH}/{dt}.srt"
+        else:
+            output_file_path = f"/tmp/{dt}.srt"
         file_to_execute = f"{base_config.BASE_DIR}/{Paths.NODE_SUBS_FILE_PATH}"
+        for log_path in [file_to_execute, self.audio_path]:
+            no_path = []
+            if log_path is not None and not os.path.exists(log_path):
+                no_path.append(log_path)
+        if len(no_path) > 0:
+            raise FileNotFoundError(f"paths {no_path} do not exist")
+
         command = ["node", file_to_execute, self.audio_path, sentence, output_file_path]
         try:
-            result = subprocess.run(command, check=True, capture_output=True, text=True)
+            result = subprocess.run(command, check=True, capture_output=True, text=True)    # type: ignore[arg-type]
         except subprocess.CalledProcessError as e:
             raise subprocess.CalledProcessError(
                 e.returncode, e.cmd, stderr=f"Command failed with exit code {e.returncode}. stderr {e.stderr}"
-            )
+            ) from e
 
         if self.cloud_storage is True:
             s3_bucket = BucketSort(bucket=BUCKET_NAME)
@@ -337,6 +353,7 @@ class Audio:
         return translated_sentence
 
 
+@custom_logging.log_all_methods
 class ImageGenerator:
     """
     Can be used to generate and store images
@@ -438,6 +455,7 @@ class ImageGenerator:
             raise NotImplementedError
 
 
+@custom_logging.log_all_methods
 class VideoGenerator:
     """Class for generating videos"""
 
@@ -447,7 +465,7 @@ class VideoGenerator:
                  translated_sentence: str,
                  image_paths: List[str],
                  audio_filepath: str,
-                 subtitles_filepath: str,
+                 subtitles_filepath: Optional[str] = None,
                  cloud_storage: bool = False,
                  ):
         """
@@ -457,7 +475,7 @@ class VideoGenerator:
         :param translated_sentence: the sentence translated to the native language
         :param image_paths: a list of paths to images to use in the video
         :param audio_filepath: the path to the audio file
-        :param subtitles_filepath: the path to the subtitles
+        :param subtitles_filepath: the path to the subtitles file if subtitles have already been generated
         :param cloud_storage: if True generated videos and related content will be stored in S3, if False the content
         will be written locally
         """
@@ -476,7 +494,7 @@ class VideoGenerator:
             colour: str = "white",
             background_opacity: float = 0.7,
             text_pos: Tuple[str, str] | Tuple[int, int] | Tuple[float, float] = ("center", "center"),
-            font: str = "Courier",
+            font: str = Paths.FONT_PATH,
             padding: int = 60
     ) -> CompositeVideoClip:
         """
@@ -507,8 +525,9 @@ class VideoGenerator:
             audio_duration: float,
             font_size: int = 50,
             colour: str = "white",
-            font: str = "Courier",
-            padding: int = 60
+            font: str = Paths.FONT_PATH,
+            padding: int = 60,
+            text_pos: Tuple[str, str] = ("center", "top")
     ) -> CompositeVideoClip:
         """
         Creates a subtitle clip for a translated sentence with dynamically resizing background.
@@ -518,6 +537,7 @@ class VideoGenerator:
         :param colour: The colour for the subtitles.
         :param font: The font for the text.
         :param padding: Padding for the subtitle background
+        :param text_pos: Where to place the subtitles
         :return: A CompositeVideoClip containing the timed translated subtitles.
         """
         words = translated_sentence.split()
@@ -536,7 +556,7 @@ class VideoGenerator:
                 text=text,
                 font_size=font_size,
                 colour=colour,
-                text_pos=("center", "top"),
+                text_pos=text_pos,
                 font=font,
                 padding=padding
             ).set_start(current_time).set_duration(display_duration)
@@ -547,14 +567,22 @@ class VideoGenerator:
         final_subtitle_clip = CompositeVideoClip(subtitle_clips)
         return final_subtitle_clip
 
-    def create_translated_subtitles_file(self, audio_duration: float) -> str:
+    def create_translated_subtitles_file(
+            self,
+            audio_duration: float,
+            words: Optional[str] = None,
+    ) -> str:
         """
         Creates a temporary SRT file for translated subtitles.
         :param audio_duration: Duration of the audio clip
+        :param words: The words to create subtitles for
         :return: Path to the created subtitles file
         """
-        words = self.translated_sentence.split()
-        word_groups = [words[i:i + 3] for i in range(0, len(words), 3)]
+        if words is None:
+            words_list = self.translated_sentence.split()
+        else:
+            words_list = words.split()
+        word_groups = [words_list[i:i + 3] for i in range(0, len(words_list), 3)]
 
         group_count = len(word_groups)
         display_duration = audio_duration / group_count
@@ -579,7 +607,7 @@ class VideoGenerator:
     def create_fancy_word_clip(
             word: str,
             font_size: int = 80,
-            font: str = "Toppan-Bunkyu-Gothic-Demibold",
+            font: str = Paths.FONT_PATH,
             duration: float = 1.0,
             stroke_colour: str = "green",
             style: str = "bounce"
@@ -636,7 +664,7 @@ class VideoGenerator:
 
         return final_clip
 
-    def generate_video(self, output_filepath: Optional[str] = None, word_font: str = "Courier") -> str:
+    def generate_video(self, output_filepath: Optional[str] = None, word_font: str = Paths.FONT_PATH) -> str:
         """
         Combine audio, images, word overlay and subtitles to generate and save a video
         :param output_filepath: the absolute path to store the generated video
@@ -653,10 +681,10 @@ class VideoGenerator:
             audio_file = utils.write_bytes_to_local_temp_file(
                 bytes_object=audio_bytes, suffix=".wav", delete_file=False
             )
-            subtitle_bytes = s3_bucket.get_object_from_s3(self.subtitles_filepath)
-            subtitle_file = utils.write_bytes_to_local_temp_file(
-                bytes_object=subtitle_bytes, suffix=".srt", delete_file=False
-            )
+            # subtitle_bytes = s3_bucket.get_object_from_s3(self.subtitles_filepath)
+            # subtitle_file = utils.write_bytes_to_local_temp_file(
+            #     bytes_object=subtitle_bytes, suffix=".srt", delete_file=False
+            # )
             image_files = []
             for image_file in self.image_paths:
                 image_bytes = s3_bucket.get_object_from_s3(image_file)
@@ -666,7 +694,7 @@ class VideoGenerator:
                 image_files.append(image)
         else:
             audio_file = self.audio_filepath
-            subtitle_file = self.subtitles_filepath
+            # subtitle_file = self.subtitles_filepath
             image_files = self.image_paths
 
         audio_clip = AudioFileClip(audio_file)
@@ -682,7 +710,8 @@ class VideoGenerator:
             style='bounce'
         )
 
-        subtitles = SubtitlesClip(subtitle_file, self.create_subtitle_clip)
+        native_srt = self.create_translated_subtitles_file(audio_duration=audio_clip.duration, words=self.sentence)
+        subtitles = SubtitlesClip(native_srt, self.create_subtitle_clip)
 
         translated_srt = self.create_translated_subtitles_file(audio_clip.duration)
         translated_subtitles = SubtitlesClip(translated_srt, lambda txt: self.create_subtitle_clip(
@@ -705,12 +734,13 @@ class VideoGenerator:
 
         s3_path = None
         if self.cloud_storage is True:
-            with tempfile.NamedTemporaryFile(suffix=".mp4", delete=True) as temp_video:
+            with tempfile.NamedTemporaryFile(suffix=".mp4", dir="/tmp", delete=True) as temp_video:
                 final_video.write_videofile(
                     temp_video.name,
                     fps=24,
                     codec="libx264",
-                    audio_codec="aac"
+                    audio_codec="aac",
+                    temp_audiofile=f"/tmp/temp_audiofile.m4a",
                 )
                 temp_video.seek(0)
 
@@ -719,7 +749,7 @@ class VideoGenerator:
                 s3_path = s3_bucket.push_object_to_s3(temp_video.read(), s3_key)
 
                 utils.remove_temp_file(audio_file)
-                utils.remove_temp_file(subtitle_file)
+                # utils.remove_temp_file(subtitle_file)
                 for tmp_image_to_remove in image_files:
                     utils.remove_temp_file(tmp_image_to_remove)
 

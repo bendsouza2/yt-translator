@@ -8,10 +8,13 @@ import boto3
 from botocore.exceptions import ClientError
 
 from python import utils
+from python import custom_logging
 
 dotenv.load_dotenv()
 
-if (public_key := os.getenv("AWS_PUBLIC_KEY") is not None) and (
+if utils.is_running_on_aws() is True:
+    session = boto3.Session()
+elif (public_key := os.getenv("AWS_PUBLIC_KEY") is not None) and (
         secret_key := os.getenv("AWS_SECRET_KEY") is not None):
     session = boto3.Session(
         aws_access_key_id=public_key,
@@ -23,6 +26,7 @@ elif os.getenv("AWS_PROFILE_NAME") is not None:
     )
 
 
+@custom_logging.log_all_methods
 class BucketSort:
     """
     Class for reading and writing to S3
