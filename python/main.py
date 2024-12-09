@@ -28,7 +28,6 @@ def process_video_and_upload(db_write_function: Optional[Callable[[Dict[str, str
         translated_sentence=audio_generator.translated_sentence,
         image_paths=image_generator.image_paths,
         audio_filepath=audio_generator.audio_path,
-        subtitles_filepath=audio_generator.sub_filepath,
         cloud_storage=True,
     )
 

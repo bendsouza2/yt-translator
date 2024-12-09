@@ -24,7 +24,7 @@ def get_logger(module_name: str) -> logging.Logger:
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        logger.setLevel(logging.INFO)  
+        logger.setLevel(logging.INFO)
     return logger
 
 

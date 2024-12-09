@@ -61,7 +61,7 @@ class Audio:
         )
         self.audio_duration = None
         self.audio_path = self.text_to_speech(language=self.language_to_learn)
-        self.sub_filepath = self.echogarden_generate_subtitles(sentence=self.sentence)
+        self.sub_filepath = None
 
     @property
     def word_list_path(self):
@@ -463,7 +463,7 @@ class VideoGenerator:
                  translated_sentence: str,
                  image_paths: List[str],
                  audio_filepath: str,
-                 subtitles_filepath: str,
+                 subtitles_filepath: Optional[str] = None,
                  cloud_storage: bool = False,
                  ):
         """
@@ -473,7 +473,7 @@ class VideoGenerator:
         :param translated_sentence: the sentence translated to the native language
         :param image_paths: a list of paths to images to use in the video
         :param audio_filepath: the path to the audio file
-        :param subtitles_filepath: the path to the subtitles
+        :param subtitles_filepath: the path to the subtitles file if subtitles have already been generated
         :param cloud_storage: if True generated videos and related content will be stored in S3, if False the content
         will be written locally
         """
@@ -524,7 +524,8 @@ class VideoGenerator:
             font_size: int = 50,
             colour: str = "white",
             font: str = "Courier",
-            padding: int = 60
+            padding: int = 60,
+            text_pos: Tuple[str, str] = ("center", "top")
     ) -> CompositeVideoClip:
         """
         Creates a subtitle clip for a translated sentence with dynamically resizing background.
@@ -534,6 +535,7 @@ class VideoGenerator:
         :param colour: The colour for the subtitles.
         :param font: The font for the text.
         :param padding: Padding for the subtitle background
+        :param text_pos: Where to place the subtitles
         :return: A CompositeVideoClip containing the timed translated subtitles.
         """
         words = translated_sentence.split()
@@ -552,7 +554,7 @@ class VideoGenerator:
                 text=text,
                 font_size=font_size,
                 colour=colour,
-                text_pos=("center", "top"),
+                text_pos=text_pos,
                 font=font,
                 padding=padding
             ).set_start(current_time).set_duration(display_duration)
@@ -563,13 +565,21 @@ class VideoGenerator:
         final_subtitle_clip = CompositeVideoClip(subtitle_clips)
         return final_subtitle_clip
 
-    def create_translated_subtitles_file(self, audio_duration: float) -> str:
+    def create_translated_subtitles_file(
+            self,
+            audio_duration: float,
+            words: Optional[str] = None,
+    ) -> str:
         """
         Creates a temporary SRT file for translated subtitles.
         :param audio_duration: Duration of the audio clip
+        :param words: The words to create subtitles for
         :return: Path to the created subtitles file
         """
-        words = self.translated_sentence.split()
+        if words is None:
+            words = self.translated_sentence.split()
+        else:
+            words = words.split()
         word_groups = [words[i:i + 3] for i in range(0, len(words), 3)]
 
         group_count = len(word_groups)
@@ -669,10 +679,10 @@ class VideoGenerator:
             audio_file = utils.write_bytes_to_local_temp_file(
                 bytes_object=audio_bytes, suffix=".wav", delete_file=False
             )
-            subtitle_bytes = s3_bucket.get_object_from_s3(self.subtitles_filepath)
-            subtitle_file = utils.write_bytes_to_local_temp_file(
-                bytes_object=subtitle_bytes, suffix=".srt", delete_file=False
-            )
+            # subtitle_bytes = s3_bucket.get_object_from_s3(self.subtitles_filepath)
+            # subtitle_file = utils.write_bytes_to_local_temp_file(
+            #     bytes_object=subtitle_bytes, suffix=".srt", delete_file=False
+            # )
             image_files = []
             for image_file in self.image_paths:
                 image_bytes = s3_bucket.get_object_from_s3(image_file)
@@ -682,7 +692,7 @@ class VideoGenerator:
                 image_files.append(image)
         else:
             audio_file = self.audio_filepath
-            subtitle_file = self.subtitles_filepath
+            # subtitle_file = self.subtitles_filepath
             image_files = self.image_paths
 
         audio_clip = AudioFileClip(audio_file)
@@ -698,7 +708,8 @@ class VideoGenerator:
             style='bounce'
         )
 
-        subtitles = SubtitlesClip(subtitle_file, self.create_subtitle_clip)
+        native_srt = self.create_translated_subtitles_file(audio_duration=audio_clip.duration, words=self.sentence)
+        subtitles = SubtitlesClip(native_srt, self.create_subtitle_clip)
 
         translated_srt = self.create_translated_subtitles_file(audio_clip.duration)
         translated_subtitles = SubtitlesClip(translated_srt, lambda txt: self.create_subtitle_clip(
@@ -735,7 +746,7 @@ class VideoGenerator:
                 s3_path = s3_bucket.push_object_to_s3(temp_video.read(), s3_key)
 
                 utils.remove_temp_file(audio_file)
-                utils.remove_temp_file(subtitle_file)
+                # utils.remove_temp_file(subtitle_file)
                 for tmp_image_to_remove in image_files:
                     utils.remove_temp_file(tmp_image_to_remove)
 
