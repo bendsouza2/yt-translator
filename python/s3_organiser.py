@@ -8,6 +8,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 from python import utils
+from python import custom_logging
 
 dotenv.load_dotenv()
 
@@ -25,6 +26,7 @@ elif os.getenv("AWS_PROFILE_NAME") is not None:
     )
 
 
+@custom_logging.log_all_methods
 class BucketSort:
     """
     Class for reading and writing to S3

@@ -26,12 +26,14 @@ from python.constants import Prompts, URLs, ModelTypes, VideoSettings, Paths, TW
 from python.language_verification import LanguageVerification
 from python.s3_organiser import BucketSort
 from python import utils
+from python import custom_logging
 import base_config
 
 
 Image.ANTIALIAS = Image.Resampling.LANCZOS  # type: ignore[attr-defined]
 
 
+@custom_logging.log_all_methods
 class Audio:
     def __init__(self,
                  word_list_path: str,
@@ -57,8 +59,8 @@ class Audio:
         self.translated_sentence = self.google_translate(
             source_language=self.language_to_learn, target_language=self.native_language
         )
+        self.audio_duration = None
         self.audio_path = self.text_to_speech(language=self.language_to_learn)
-        self.audio_duration = self.get_audio_duration()
         self.sub_filepath = self.echogarden_generate_subtitles(sentence=self.sentence)
 
     @property
@@ -79,8 +81,10 @@ class Audio:
         :param filepath: Optional, the filepath to save the resulting .mp3 file to
         """
         dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-        if filepath is None:
+        if filepath is None and self.cloud_storage is False:
             filepath = f"{base_config.BASE_DIR}/{Paths.AUDIO_DIR_PATH}/{dt}.wav"
+        elif filepath is None and self.cloud_storage is True:
+            filepath = f"/tmp/{dt}.wav"
         tts = gTTS(self.sentence, lang=language)
 
         if self.cloud_storage:
@@ -88,11 +92,9 @@ class Audio:
             tts.write_to_fp(audio_buffer)
             audio_buffer.seek(0)
 
-            s3_key = f"{Paths.AUDIO_DIR_PATH}/{dt}"
+            s3_key = f"{Paths.AUDIO_DIR_PATH}/{dt}.wav"
             s3_bucket = BucketSort(bucket=BUCKET_NAME)
             s3_path = s3_bucket.push_object_to_s3(audio_buffer.read(), s3_key)
-
-            return s3_path
 
         tts.save(filepath)
         return filepath
@@ -122,6 +124,8 @@ class Audio:
         Writes the sentence to a .srt subtitle file
         :param total_syllable_count: The total number of syllables in the audio
         """
+        if self.audio_duration is None:
+            self.audio_duration = self.get_audio_duration()
         syllables_per_second = self.audio_duration / total_syllable_count
         subtitle_length = 3
         words = self.sentence.split(" ")
@@ -175,15 +179,25 @@ class Audio:
         :return: The output_file_path that the .srt file was written to if successfully generated, else None
         """
         dt = datetime.utcnow().strftime("%m-%d-%Y %H:%M:%S")
-        output_file_path = f"{base_config.BASE_DIR}/{Paths.SUBTITLE_DIR_PATH}/{dt}.srt"
+        if self.cloud_storage is False:
+            output_file_path = f"{base_config.BASE_DIR}/{Paths.SUBTITLE_DIR_PATH}/{dt}.srt"
+        else:
+            output_file_path = f"/tmp/{dt}.srt"
         file_to_execute = f"{base_config.BASE_DIR}/{Paths.NODE_SUBS_FILE_PATH}"
+        for log_path in [file_to_execute, self.audio_path]:
+            no_path = []
+            if not os.path.exists(log_path):
+                no_path.append(log_path)
+        if len(no_path) > 0:
+            raise FileNotFoundError(f"paths {no_path} do not exist")
+
         command = ["node", file_to_execute, self.audio_path, sentence, output_file_path]
         try:
             result = subprocess.run(command, check=True, capture_output=True, text=True)
         except subprocess.CalledProcessError as e:
             raise subprocess.CalledProcessError(
                 e.returncode, e.cmd, stderr=f"Command failed with exit code {e.returncode}. stderr {e.stderr}"
-            )
+            ) from e
 
         if self.cloud_storage is True:
             s3_bucket = BucketSort(bucket=BUCKET_NAME)
@@ -337,6 +351,7 @@ class Audio:
         return translated_sentence
 
 
+@custom_logging.log_all_methods
 class ImageGenerator:
     """
     Can be used to generate and store images
@@ -438,6 +453,7 @@ class ImageGenerator:
             raise NotImplementedError
 
 
+@custom_logging.log_all_methods
 class VideoGenerator:
     """Class for generating videos"""
 
