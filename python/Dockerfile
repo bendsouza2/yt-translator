@@ -20,8 +20,14 @@ RUN yum update -y && \
     aspell-esp \
     aspell-es \
     hunspell-es \
-    make && \
+    make \
+    liberation-sans-fonts \
+    ImageMagick && \
     yum clean all
+
+
+RUN fc-cache -f -v
+RUN fc-list | grep LiberationSans
 
 RUN mkdir -p /usr/share/hunspell && \
     curl -o /usr/share/hunspell/es_ES.dic https://cgit.freedesktop.org/libreoffice/dictionaries/plain/es/es_ES.dic && \

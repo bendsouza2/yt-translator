@@ -59,8 +59,8 @@ class Audio:
         self.translated_sentence = self.google_translate(
             source_language=self.language_to_learn, target_language=self.native_language
         )
-        self.audio_duration = None
-        self.audio_path = self.text_to_speech(language=self.language_to_learn)
+        self.audio_duration: Optional[float] = None
+        self.audio_path, self.audio_cloud_path = self.text_to_speech(language=self.language_to_learn)
         self.sub_filepath = None
 
     @property
@@ -74,7 +74,7 @@ class Audio:
         else:
             self._word_list_path = f"{base_config.BASE_DIR}/{word_list_path}"
 
-    def text_to_speech(self, language: str, filepath: Optional[str] = None) -> str:
+    def text_to_speech(self, language: str, filepath: Optional[str] = None) -> Tuple[str | None, str | None]:
         """
         Generate an audio file
         :param language: The language that the audio should be generated in
@@ -95,9 +95,11 @@ class Audio:
             s3_key = f"{Paths.AUDIO_DIR_PATH}/{dt}.wav"
             s3_bucket = BucketSort(bucket=BUCKET_NAME)
             s3_path = s3_bucket.push_object_to_s3(audio_buffer.read(), s3_key)
+        else:
+            s3_path = None
 
         tts.save(filepath)
-        return filepath
+        return filepath, s3_path
 
     def get_audio_duration(self) -> float:
         """
@@ -186,14 +188,14 @@ class Audio:
         file_to_execute = f"{base_config.BASE_DIR}/{Paths.NODE_SUBS_FILE_PATH}"
         for log_path in [file_to_execute, self.audio_path]:
             no_path = []
-            if not os.path.exists(log_path):
+            if log_path is not None and not os.path.exists(log_path):
                 no_path.append(log_path)
         if len(no_path) > 0:
             raise FileNotFoundError(f"paths {no_path} do not exist")
 
         command = ["node", file_to_execute, self.audio_path, sentence, output_file_path]
         try:
-            result = subprocess.run(command, check=True, capture_output=True, text=True)
+            result = subprocess.run(command, check=True, capture_output=True, text=True)    # type: ignore[arg-type]
         except subprocess.CalledProcessError as e:
             raise subprocess.CalledProcessError(
                 e.returncode, e.cmd, stderr=f"Command failed with exit code {e.returncode}. stderr {e.stderr}"
@@ -492,7 +494,7 @@ class VideoGenerator:
             colour: str = "white",
             background_opacity: float = 0.7,
             text_pos: Tuple[str, str] | Tuple[int, int] | Tuple[float, float] = ("center", "center"),
-            font: str = "Courier",
+            font: str = Paths.FONT_PATH,
             padding: int = 60
     ) -> CompositeVideoClip:
         """
@@ -523,7 +525,7 @@ class VideoGenerator:
             audio_duration: float,
             font_size: int = 50,
             colour: str = "white",
-            font: str = "Courier",
+            font: str = Paths.FONT_PATH,
             padding: int = 60,
             text_pos: Tuple[str, str] = ("center", "top")
     ) -> CompositeVideoClip:
@@ -577,10 +579,10 @@ class VideoGenerator:
         :return: Path to the created subtitles file
         """
         if words is None:
-            words = self.translated_sentence.split()
+            words_list = self.translated_sentence.split()
         else:
-            words = words.split()
-        word_groups = [words[i:i + 3] for i in range(0, len(words), 3)]
+            words_list = words.split()
+        word_groups = [words_list[i:i + 3] for i in range(0, len(words_list), 3)]
 
         group_count = len(word_groups)
         display_duration = audio_duration / group_count
@@ -605,7 +607,7 @@ class VideoGenerator:
     def create_fancy_word_clip(
             word: str,
             font_size: int = 80,
-            font: str = "Toppan-Bunkyu-Gothic-Demibold",
+            font: str = Paths.FONT_PATH,
             duration: float = 1.0,
             stroke_colour: str = "green",
             style: str = "bounce"
@@ -662,7 +664,7 @@ class VideoGenerator:
 
         return final_clip
 
-    def generate_video(self, output_filepath: Optional[str] = None, word_font: str = "Courier") -> str:
+    def generate_video(self, output_filepath: Optional[str] = None, word_font: str = Paths.FONT_PATH) -> str:
         """
         Combine audio, images, word overlay and subtitles to generate and save a video
         :param output_filepath: the absolute path to store the generated video
@@ -732,12 +734,13 @@ class VideoGenerator:
 
         s3_path = None
         if self.cloud_storage is True:
-            with tempfile.NamedTemporaryFile(suffix=".mp4", delete=True) as temp_video:
+            with tempfile.NamedTemporaryFile(suffix=".mp4", dir="/tmp", delete=True) as temp_video:
                 final_video.write_videofile(
                     temp_video.name,
                     fps=24,
                     codec="libx264",
-                    audio_codec="aac"
+                    audio_codec="aac",
+                    temp_audiofile=f"/tmp/temp_audiofile.m4a",
                 )
                 temp_video.seek(0)
 
