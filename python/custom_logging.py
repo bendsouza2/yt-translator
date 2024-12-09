@@ -17,14 +17,14 @@ def get_logger(module_name: str) -> logging.Logger:
         logging.Logger: Configured logger instance.
     """
     logger = logging.getLogger(module_name)
-    if not logger.hasHandlers():  # Prevents adding handlers multiple times if reused
-        handler = logging.StreamHandler()  # Logs to stdout by default
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        logger.setLevel(logging.INFO)  # Set your desired logging level here
+        logger.setLevel(logging.INFO)  
     return logger
 
 
