@@ -27,6 +27,8 @@ def process_video_and_upload(db_write_function: Optional[Callable[[Dict[str, str
     else:
         audio_file = audio_generator.audio_path
 
+    if audio_file is None:
+        raise TypeError(f"audio_file must be a string")
     video_generator = VideoGenerator(
         word=audio_generator.word,
         sentence=audio_generator.sentence,
