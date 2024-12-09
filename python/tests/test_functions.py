@@ -26,6 +26,7 @@ class TestWordGenerator(unittest.TestCase):
         cls.mock_get_audio_duration = patch("python.word_generator.Audio.get_audio_duration").start()
         cls.mock_generate_srt_file = patch("python.word_generator.Audio.echogarden_generate_subtitles").start()
 
+        cls.mock_tts.return_value = ("local_path", "cloud_path")
         cls.mock_google_translator.return_value.translate.return_value = "Translated sentence"
         cls.audio = Audio(
             word_list_path="python/tests/test_word_list.txt",
