@@ -39,7 +39,6 @@ RUN cd /var/task/node && npm install
 COPY requirements.txt /var/task/requirements.txt
 RUN pip install --no-cache-dir -r /var/task/requirements.txt
 
-# Copy application code
 COPY . /var/task
 
 CMD ["python.lambda_handler.lambda_handler"]
