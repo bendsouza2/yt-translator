@@ -1,13 +1,13 @@
 # YT-Translator
 
 ### Project Overview
-This project aims to provide free and accessible language learning resources in the form of video content created leveraging LLMs. THe project was created with Spanish as the target language to learn, and English as the base language. However, this can easily be customised to provide language learning resources for other languages. I have written (detailed documentation)[https://github.com/bendsouza2/yt-translator/tree/main/python/README.md] on the video creation side of the project, which you can (view here)[https://github.com/bendsouza2/yt-translator/tree/main/python/README.md] if you want to clone the project for your own use case. 
+This project aims to provide free and accessible language learning resources in the form of video content created leveraging LLMs. THe project was created with Spanish as the target language to learn, and English as the base language. However, this can easily be customised to provide language learning resources for other languages. I have written [detailed documentation](https://github.com/bendsouza2/yt-translator/tree/main/python/README.md) on the video creation side of the project, which you can [view here](https://github.com/bendsouza2/yt-translator/tree/main/python/README.md) if you want to clone the project for your own use case. 
 
 The video creation element of the project has been completed as above.
 
 The web backend has been completed and the frontend is at the deployment stage.
 
-You can (view examples of the video output here.)[https://www.youtube.com/channel/UCQjyvCIR9IkG02Q0Wmpz9sQ] New videos are uploaded every day at 12pm UTC. 
+You can [view examples of the video output here.](https://www.youtube.com/channel/UCQjyvCIR9IkG02Q0Wmpz9sQ) New videos are uploaded every day at 12pm UTC. 
 
 
 ## Developer Customisation - Video Uploads
@@ -49,7 +49,7 @@ To customise the project and deploy the video creation capabilities, complete th
    - AWSLambdaBasicExecutionRole
 
 9. Assuming your RDS instance is within a VPC your Lambda function needs to be within the same VPC to access it (Lambda functions don't have a static IP, so you can't just add an inbound rule allowing access from the Lambda function's IP).
-   - This presents another problem as the Lambda function won't be able to make API calls from within a VPC. (See the docs)[https://repost.aws/knowledge-center/internet-access-lambda-function] on how to allow the Lambda function to make API calls from within a VPC
+   - This presents another problem as the Lambda function won't be able to make API calls from within a VPC. [See the docs](https://repost.aws/knowledge-center/internet-access-lambda-function) on how to allow the Lambda function to make API calls from within a VPC
 
 10. Setup a trigger for the Lambda function. Mine is just running a CRON job using EventBridge.
 
@@ -57,5 +57,5 @@ To customise the project and deploy the video creation capabilities, complete th
 ## Potential Problems
 Some problems I encountered in setup or that you might encounter if working with the project for the first time:
 
-* I'm using enchant to verify that the 'word of the day' is real. The dockerfile handles the install of enchant, but if you're working with a new language, the dictionary for that language may not be pre-installed. You can find a list of (available language dictionaries here.)[https://cgit.freedesktop.org/libreoffice/dictionaries/tree/] If you need to install a new dictionary, just add a line to the docker file:
+* I'm using enchant to verify that the 'word of the day' is real. The dockerfile handles the install of enchant, but if you're working with a new language, the dictionary for that language may not be pre-installed. You can find a list of [available language dictionaries here.](https://cgit.freedesktop.org/libreoffice/dictionaries/tree/) If you need to install a new dictionary, just add a line to the docker file:
    - `curl -o <LINK_TO_DICT_FILE>`
