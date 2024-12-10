@@ -48,7 +48,7 @@ To customise the project and deploy the video creation capabilities, complete th
    - AWSLambdaBasicExecutionRole
 
 9. Assuming your RDS instance is within a VPC your Lambda function needs to be within the same VPC to access it (Lambda functions don't have a static IP, so you can't just add an inbound rule allowing access from the Lambda function's IP).
-   - This presents another problem as the Lambda function won't be able to make API calls from within a VPC. (See the docs)[https://repost.aws/knowledge-center/internet-access-lambda-function] on how to allow the Lambda function to make API calls from within a VPC
+   - This presents another problem as the Lambda function won't be able to make API calls from within a VPC. [See the docs](https://repost.aws/knowledge-center/internet-access-lambda-function) on how to allow the Lambda function to make API calls from within a VPC
 
 10. Setup a trigger for the Lambda function. Mine is just running a CRON job using EventBridge.
 
@@ -56,5 +56,5 @@ To customise the project and deploy the video creation capabilities, complete th
 ## Potential Problems
 Some problems I encountered in setup or that you might encounter if working with the project for the first time:
 
-* I'm using enchant to verify that the 'word of the day' is real. The dockerfile handles the install of enchant, but if you're working with a new language, the dictionary for that language may not be pre-installed. You can find a list of (available language dictionaries here.)[https://cgit.freedesktop.org/libreoffice/dictionaries/tree/] If you need to install a new dictionary, just add a line to the docker file:
+* I'm using enchant to verify that the 'word of the day' is real. The dockerfile handles the install of enchant, but if you're working with a new language, the dictionary for that language may not be pre-installed. You can find a list of [available language dictionaries here.](https://cgit.freedesktop.org/libreoffice/dictionaries/tree/) If you need to install a new dictionary, just add a line to the docker file:
    - `curl -o <LINK_TO_DICT_FILE>`
