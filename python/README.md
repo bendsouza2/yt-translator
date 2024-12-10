@@ -3,11 +3,11 @@ This readme documents how to implement the video upload functionality. For a gen
 
 ## Video Creation
 Videos are created and uploaded by a Lambda function which runs once a day. This function:
-	* Interacts with OpenAI (Dalle) to generate images
-	* Uses LLMs to create a word of the day and associated sentences/definitions for the word
-	* Combines audio, text and images to generate a video using moviepy
-	* Uploads the generated content to YouTube
-	* Logs the video creation and metadata to a MySQL DB
+* Interacts with OpenAI (Dalle) to generate images
+* Uses LLMs to create a word of the day and associated sentences/definitions for the word
+* Combines audio, text and images to generate a video using moviepy
+* Uploads the generated content to YouTube
+* Logs the video creation and metadata to a MySQL DB
 
 ## Developer Customisation
 
