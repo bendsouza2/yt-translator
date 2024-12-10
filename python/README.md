@@ -30,3 +30,25 @@ To customise the project and deploy the video creation capabilities, complete th
 5. Push the docker image to ECR. Assuming you have [configured your AWS CLI profile](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html) and setup the ECR repo, run:
    - `docker tag <REPO_NAME/IMAGE_NAME> <LINK_TO_REPO/IMAGE_NAME>`
    - `docker push <LINK_TO_REPO/IMAGE_NAME>`
+
+6. Create a new Lambda function using the image hosted in ECR.
+   - Note that the image is built for arm64 architecture, so make sure to specify that in the Lambda configuration
+   - The default timeout on Lambda is 3 seconds. From my tests the function takes about a minute to run, so you'll need to increase the timeout limit.
+
+7. Make sure the below environment variables have been added to the Lambda function:
+   - `DB_HOST` = The RDS endpoint for the database
+   - `DB_USER` = The username with read/write access
+   - `DB_PASSWORD` = The password for the username
+   - `DB_NAME` = The name of the database
+   - `YT_CREDENTIALS` = The oauth credentials, including refresh token and access token
+
+8. Assign an IAM role to the Lambda function which has the following permissions attached:
+   - AmazonS3FullAccess
+   - AmazonRDSFullAccess
+   - AWSLambdaBasicExecutionRole
+
+9. Assuming your RDS instance is within a VPC your Lambda function needs to be within the same VPC to access it (Lambda functions don't have a static IP, so you can't just add an inbound rule allowing access from the Lambda function's IP).
+   - This presents another problem as the Lambda function won't be able to make API calls from within a VPC. (See the docs)[https://repost.aws/knowledge-center/internet-access-lambda-function] on how to allow the Lambda function to make API calls from within a VPC
+
+10. Setup a trigger for the Lambda function. Mine is just running a CRON job using EventBridge.
+
