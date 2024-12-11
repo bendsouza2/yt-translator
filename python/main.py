@@ -4,13 +4,14 @@ from datetime import datetime
 from python.word_generator import Audio, ImageGenerator, VideoGenerator
 from python.yt_uploader import YTConnector
 from python.constants import Paths, LANGUAGE_TO_LEARN, NATIVE_LANGUAGE, Prompts
+from python.db_handler import write_to_db
 
 
-def process_video_and_upload(db_write_function: Optional[Callable[[Dict[str, str]], None]] = None) -> Dict[str, str]:
+def process_video_and_upload(write_to_rds: bool = False) -> Dict[str, str]:
     """
     Combines the main functionality to generate audio and video for a random word and upload it to YouTube.
     Optionally writes metadata to a database using `db_write_function`.
-    :param db_write_function: Write video metadata to a RDB
+    :param write_to_rds: Write video metadata to MySQL instance hosted in RDS
     """
     audio_generator = Audio(
         word_list_path=Paths.WORD_LIST_PATH,
@@ -63,7 +64,7 @@ def process_video_and_upload(db_write_function: Optional[Callable[[Dict[str, str
         "thumbnail_url": upload_details["snippet"]["thumbnails"]["default"]["url"],
     }
 
-    if db_write_function is True:
-        db_write_function(response)
+    if write_to_rds is True:
+        write_to_db(response)
 
     return response
