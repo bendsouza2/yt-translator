@@ -6,7 +6,6 @@ from typing import Dict, Any
 import MySQLdb
 
 from python.main import process_video_and_upload
-from python.db_handler import write_to_db
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -26,7 +25,7 @@ def lambda_handler(event: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, 
         if len(missing_vars) > 0:
             raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
-        video_details = process_video_and_upload(db_write_function=write_to_db)
+        video_details = process_video_and_upload(write_to_rds=True)
 
         return {
             "statusCode": 200,

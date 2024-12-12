@@ -42,7 +42,7 @@ RUN cd /var/task/node && npm install
 
 
 # Install Python dependencies
-COPY requirements.txt /var/task/requirements.txt
+COPY lambda-requirements.txt /var/task/requirements.txt
 RUN pip install --no-cache-dir -r /var/task/requirements.txt
 
 COPY . /var/task
