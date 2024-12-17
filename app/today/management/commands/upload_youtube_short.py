@@ -3,7 +3,7 @@ import datetime
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from today.models import Sentences
+from today.models import Video
 from python.main import process_video_and_upload
 
 
@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
         video_details = process_video_and_upload()
 
-        sentence, created = Sentences.objects.update_or_create(
+        sentence, created = Video.objects.update_or_create(
             video_id=video_details["video_id"],
             defaults={
                 "word": video_details["word"],
