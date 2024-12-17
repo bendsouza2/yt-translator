@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 
-from today.models import Video, VideoDetails
+from today.models import Video
 from today.serializers import VideoDetailsSerializer
 
 
@@ -12,9 +12,9 @@ class VideoDetailsViewSet(viewsets.ModelViewSet):
     """
     API endpoint for retrieving and manipulating VideoDetails instances
 
-    Provides standard CRUD operations on VideoDetails data.
+    Provides standard CRUD operations on Video data.
     """
-    queryset = VideoDetails.objects.all()
+    queryset = Video.objects.all()
     serializer_class = VideoDetailsSerializer
 
     @action(detail=False, methods=["get"], url_path="latest")

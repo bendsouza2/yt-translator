@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from today.models import VideoDetails
+from today.models import Video
 
 
 class VideoDetailsSerializer(serializers.ModelSerializer):
@@ -19,7 +19,7 @@ class VideoDetailsSerializer(serializers.ModelSerializer):
         thumbnail_url (str): URL of the video's thumbnail image.
     """
     class Meta:
-        model = VideoDetails
+        model = Video
         fields = [
             "video_id",
             "word",
