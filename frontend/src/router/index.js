@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import LatestVideo from '@/components/LatestVideo.vue'; // Adjust this import to your component
+import LatestVideo from '@/components/LatestVideo.vue'; 
 
 const routes = [
   {
