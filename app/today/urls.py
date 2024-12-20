@@ -8,5 +8,5 @@ router.register(r"videos", views.VideoDetailsViewSet, basename="videodetails")
 
 
 urlpatterns = [
-    path("api/", include(router.urls))
+    path("today/", include(router.urls))
 ]

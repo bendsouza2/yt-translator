@@ -4,10 +4,10 @@ import LatestVideo from '@/components/LatestVideo.vue';
 const routes = [
   {
     path: '/',
-    redirect: '/today/api/videos/latest',
+    redirect: '/today/videos/latest',
   },
   {
-    path: '/today/api/videos/latest',
+    path: '/today/videos/latest',
     component: LatestVideo, 
   },
 ];
