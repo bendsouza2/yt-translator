@@ -68,7 +68,7 @@ const revealed = reactive({
 async function fetchVideos() {
   try {
     const apiBaseUrl = process.env.VUE_APP_API_BASE_URL;
-    const response = await axios.get(`${apiBaseUrl}today/api/videos/latest/`);
+    const response = await axios.get(`${apiBaseUrl}today/videos/latest/`);
 
     if (response.data) {
       video.video_id = response.data.video_id || "";
