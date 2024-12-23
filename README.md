@@ -1,13 +1,22 @@
 # YT-Translator
 
-### Project Overview
-This project aims to provide free and accessible language learning resources in the form of video content created leveraging LLMs. THe project was created with Spanish as the target language to learn, and English as the base language. However, this can easily be customised to provide language learning resources for other languages. I have written [detailed documentation](https://github.com/bendsouza2/yt-translator/tree/main/python/README.md) on the video creation side of the project, which you can [view here](https://github.com/bendsouza2/yt-translator/tree/main/python/README.md) if you want to clone the project for your own use case. 
+## Contents
 
-The video creation element of the project has been completed as above.
 
-The web backend has been completed and the frontend is at the deployment stage.
+## Project Overview
+This project aims to provide free and accessible language learning resources in the form of video content created leveraging LLMs. There are three main components to this project:
 
-You can [view examples of the video output here.](https://www.youtube.com/channel/UCQjyvCIR9IkG02Q0Wmpz9sQ) New videos are uploaded every day at 12pm UTC. 
+1. Video creation
+2. Web backend
+3. Web frontend
+
+
+The project was created with Spanish as the target language to learn, and English as the base language. However, this can easily be customised to provide language learning resources for other languages. I have written [detailed documentation](https://github.com/bendsouza2/yt-translator/tree/main/python/README.md) on the video creation side of the project, which you can [view here](https://github.com/bendsouza2/yt-translator/tree/main/python/README.md) if you want to clone the project for your own use case. 
+
+
+You can [watch the videos here.](https://www.youtube.com/channel/UCQjyvCIR9IkG02Q0Wmpz9sQ) New videos are uploaded every day at 12pm UTC. 
+
+Or [go straight to the website.]()
 
 
 ## Developer Customisation - Video Uploads
@@ -54,8 +63,37 @@ To customise the project and deploy the video creation capabilities, complete th
 10. Setup a trigger for the Lambda function. Mine is just running a CRON job using EventBridge.
 
 
-## Potential Problems
+## Potential Problems (Video Generation)
 Some problems I encountered in setup or that you might encounter if working with the project for the first time:
 
 * I'm using enchant to verify that the 'word of the day' is real. The dockerfile handles the install of enchant, but if you're working with a new language, the dictionary for that language may not be pre-installed. You can find a list of [available language dictionaries here.](https://cgit.freedesktop.org/libreoffice/dictionaries/tree/) If you need to install a new dictionary, just add a line to the docker file:
    - `curl -o <LINK_TO_DICT_FILE>`
+
+
+## Backend Setup
+
+The backend is built using Django, connects to the frontend via REST APIs and is hosted on AWS EC2. Data is stored and managed in a MySQL instance hosted in AWS RDS. General instructions on the setup are below.
+
+1. Create your EC2 instance and configure the Amazon Machine Image, instance type and network settings. 
+   - This repo is built for ARM64 architecture, so I'd recommend going with ARM64 for compatability.
+   - Make sure to create a new key pair for the new instance.
+   - Using AWS CLI you can run:
+      - `aws ec2 run-instances --image-id <AMI_IMAGE_ID> --instance-type <INSTANCE_TYPE> --network-interfaces '{"AssociatePublicIpAddress":true,"DeviceIndex":0,"Groups":["sg-preview-1"]}' --credit-specification '{"CpuCredits":"unlimited"}' --metadata-options '{"HttpEndpoint":"enabled","HttpPutResponseHopLimit":2,"HttpTokens":"required"}' --private-dns-name-options '{"HostnameType":"ip-name","EnableResourceNameDnsARecord":true,"EnableResourceNameDnsAAAARecord":false}' --count "1" `
+2. SSH into the EC2 instance and clone the repo. Run the below:
+   - `ssh -i your-key.pem ubuntu@your-ec2-public-ip`
+   - `git clone --branch main https://github.com/bendsouza2/yt-translator.git yt_translator`
+   - `cd yt_translator`
+   - `git config core.sparseCheckout true`
+   - `echo "app/" >> .git/info/sparse-checkout`
+   - `echo "requirements.txt" >> .git/info/sparse-checkout`
+   - `git pull origin main`
+
+
+
+## Frontend Setup
+
+1. 
+
+## Project Structure
+
+
