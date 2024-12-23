@@ -27,6 +27,6 @@ class VideoDetailsSerializer(serializers.ModelSerializer):
             "translated_sentence",
             "title",
             "description",
-            "upload_date",
+            "upload_time",
             "thumbnail_url",
         ]
