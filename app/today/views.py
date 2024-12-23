@@ -19,7 +19,7 @@ class VideoDetailsViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="latest")
     def latest_video(self, request):
-        recent_video = self.get_queryset().order_by("-upload_date").first()
+        recent_video = self.get_queryset().order_by("-upload_time").first()
         if recent_video is not None:
             serializer = self.get_serializer(recent_video)
             return Response(serializer.data)

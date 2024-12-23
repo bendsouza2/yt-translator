@@ -2,7 +2,7 @@
   <div class="background-container">
     <div class="top-content">
       <h1>Spanish Word of the Day</h1>
-      <h2 v-if="video.upload_date">{{ video.upload_date }}</h2>
+      <h2 v-if="video.upload_time">{{ video.upload_time }}</h2>
     </div>
 
     <div v-if="video.video_id" class="video-container">
@@ -56,7 +56,7 @@ const video = reactive({
   word: "",
   sentence: "",
   translated_sentence: "",
-  upload_date: "",
+  upload_time: "",
 });
 
 const flipped = ref(false);
@@ -76,7 +76,7 @@ async function fetchVideos() {
       video.word = response.data.word || "";
       video.sentence = response.data.sentence || "";
       video.translated_sentence = response.data.translated_sentence || "";
-      video.upload_date = formatDate(new Date(response.data.upload_date)) || "";
+      video.upload_time = formatDate(new Date(response.data.upload_time)) || "";
     } else {
       console.error("Error: No data received from API.");
     }
