@@ -1,14 +1,12 @@
 # YT-Translator
 
-## Contents
-
 
 ## Project Overview
 This project aims to provide free and accessible language learning resources in the form of video content created leveraging LLMs. There are three main components to this project:
 
-1. Video creation
+1. [Video creation]((https://www.youtube.com/channel/UCQjyvCIR9IkG02Q0Wmpz9sQ))
 2. Web backend
-3. Web frontend
+3. [Web frontend](videos.internationalwordoftheday.info)
 
 
 The project was created with Spanish as the target language to learn, and English as the base language. However, this can easily be customised to provide language learning resources for other languages. I have written [detailed documentation](https://github.com/bendsouza2/yt-translator/tree/main/python/README.md) on the video creation side of the project, which you can [view here](https://github.com/bendsouza2/yt-translator/tree/main/python/README.md) if you want to clone the project for your own use case. 
@@ -16,7 +14,7 @@ The project was created with Spanish as the target language to learn, and Englis
 
 You can [watch the videos here.](https://www.youtube.com/channel/UCQjyvCIR9IkG02Q0Wmpz9sQ) New videos are uploaded every day at 12pm UTC. 
 
-Or [go straight to the website.]()
+Or [go straight to the website.](videos.internationalwordoftheday.info)
 
 
 ## Developer Customisation - Video Uploads
@@ -79,21 +77,61 @@ The backend is built using Django, connects to the frontend via REST APIs and is
    - Make sure to create a new key pair for the new instance.
    - Using AWS CLI you can run:
       - `aws ec2 run-instances --image-id <AMI_IMAGE_ID> --instance-type <INSTANCE_TYPE> --network-interfaces '{"AssociatePublicIpAddress":true,"DeviceIndex":0,"Groups":["sg-preview-1"]}' --credit-specification '{"CpuCredits":"unlimited"}' --metadata-options '{"HttpEndpoint":"enabled","HttpPutResponseHopLimit":2,"HttpTokens":"required"}' --private-dns-name-options '{"HostnameType":"ip-name","EnableResourceNameDnsARecord":true,"EnableResourceNameDnsAAAARecord":false}' --count "1" `
-2. SSH into the EC2 instance and clone the repo. Run the below:
-   - `ssh -i your-key.pem ubuntu@your-ec2-public-ip`
-   - `git clone --branch main https://github.com/bendsouza2/yt-translator.git yt_translator`
-   - `cd yt_translator`
-   - `git config core.sparseCheckout true`
-   - `echo "app/" >> .git/info/sparse-checkout`
-   - `echo "requirements.txt" >> .git/info/sparse-checkout`
-   - `git pull origin main`
+   - Also make sure ports 80 (HTTP) and 443 (HTTPS) are open.
+2. Add an inbound rule to make sure the VPC hosting your RDS instance allows access from the EC2 instance.
+3. Use `scp` to transfer the cluster_setup.sh script to your EC2 instance:
+   - `scp app/setup-script.sh ec2-user@<your-ec2-ip>:~/`
+4. SSH into the EC2 instance and run the script. 
+   - `./setup-script.sh`
+5. Make sure there's a valid SSL certificate, run:
+   - `sudo certbot certonly --standalone --preferred-challenges http --email your-email@example.com -d yourdomain.com`
+6. Setup Gunicorn and configure it to use the SSL cert.
+   - Create a new service file: `sudo nano /etc/systemd/system/gunicorn.service`
+      - Make sure the ExecStart is pointing to the right location, using the correct port and using your wsgi application.
+      - Also make sure that the user used in the Gunicorn service file has access to read the SSL .pem files, as these might be restricted.
+   - To start gunicorn run the below:
+      - `sudo systemctl daemon-reload`
+      - `sudo systemctl start gunicorn`
+      - `sudo systemctl enable gunicorn`
+   - To check it's running correctly, run:
+      - `sudo systemctl status gunicorn`
+7. Install and [setup Nginx](https://ubuntu.com/tutorials/install-and-configure-nginx#1-overview) or handle redirection within Django. To force secure connections with Django, update the settings.py file:
+   - `SECURE_SSL_REDIRECT = True`
+   - `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') `
 
 
 
-## Frontend Setup
-
-1. 
 
 ## Project Structure
+
+
+```plaintext
+yt_translator/
+├── requirements.txt
+├── base_config.py
+├── python/                  # Contains video generation in Python
+│   ├── Dockerfile
+│   ├── lambda_handler.py
+├── node/                    # Contains video generation in Node.js
+├── app/                     # Django files
+│   ├── video_host/          # Central project
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   ├── wsgi.py
+│   ├── today/               # Latest day's videos and related APIs/models
+│   │   ├── migrations/
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── tests.py
+│   │   ├── views.py
+│   ├── manage.py
+├── frontend/                # Vue.js files
+│   ├── public/
+│   ├── src/
+│   ├── package.json
+│   ├── webpack.config.js
+
 
 
