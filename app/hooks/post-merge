@@ -1,0 +1,2 @@
+#!/bin/bash
+bash /home/ubuntu/yt_translator/app/post_update.sh
