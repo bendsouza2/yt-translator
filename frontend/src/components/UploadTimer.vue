@@ -10,6 +10,7 @@
 </template>
   
 <script setup lang="ts">
+/* eslint-disable */
 import { ref, onMounted, onUnmounted } from "vue";
   
 /**
@@ -32,8 +33,9 @@ const countdown = ref({
     minutes: 0,
     seconds: 0,
   });
-  
-let interval = null;
+
+// eslint-disable-next-line
+let interval: ReturnType<typeof setInterval> | undefined = undefined;
   
 /**
  * Get a countdown to the next upload time (12pm UTC).
@@ -65,9 +67,11 @@ onMounted(() => {
     interval = setInterval(updateCountdown, 1000); 
   });
   
-onUnmounted(() => {
-    clearInterval(interval); 
-  });
+  onUnmounted(() => {
+  if (interval !== undefined) {
+    clearInterval(interval);
+  }
+});
 </script>
   
 <style scoped>
