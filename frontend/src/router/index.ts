@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LatestVideo from '@/components/LatestVideo.vue'; 
+import UploadTimer from '@/components/UploadTimer.vue';
 
 const routes = [
   {
@@ -9,6 +10,10 @@ const routes = [
   {
     path: '/today/videos/latest',
     component: LatestVideo, 
+  },
+  {
+    path: '/today/videos/next',
+    component: UploadTimer
   },
 ];
 
