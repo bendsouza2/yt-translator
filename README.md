@@ -1,5 +1,7 @@
 # YT-Translator
 
+![Build Status](https://github.com/bendsouza2/yt-translator/actions/workflows/python-unittest.yml/badge.svg)
+
 
 ## Project Overview
 This project aims to provide free and accessible language learning resources in the form of video content created leveraging LLMs. There are three main components to this project:
