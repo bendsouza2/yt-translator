@@ -204,33 +204,29 @@ async function sleep(ms: number): Promise<void> {
 async function animateText(): Promise<void> {
     while (true) {
         if (isAnimatingEnglish.value) {
-            // Reset Spanish words
             visibleSpanishWords.value = Array(spanishWords.value.length).fill(false);
             
-            // Animate English words
             for (let i = 0; i < englishWords.value.length; i++) {
                 visibleEnglishWords.value[i] = true;
-                await sleep(300); // Time between each word appearing
+                await sleep(300); 
             }
             
-            await sleep(2000); // Pause with full English text visible
+            await sleep(2000); 
             visibleEnglishWords.value = Array(englishWords.value.length).fill(false);
         } else {
-            // Reset English words
             visibleEnglishWords.value = Array(englishWords.value.length).fill(false);
             
-            // Animate Spanish words
             for (let i = 0; i < spanishWords.value.length; i++) {
                 visibleSpanishWords.value[i] = true;
-                await sleep(300); // Time between each word appearing
+                await sleep(300); 
             }
             
-            await sleep(2000); // Pause with full Spanish text visible
+            await sleep(2000); 
             visibleSpanishWords.value = Array(spanishWords.value.length).fill(false);
         }
         
         isAnimatingEnglish.value = !isAnimatingEnglish.value;
-        await sleep(500); // Pause between language switches
+        await sleep(500); 
     }
 }
 
