@@ -1,21 +1,16 @@
 <template>
   <div id="app">
-    <VideoDetails class="big-title"/>
+    <router-view class="big-title"/>
   </div>
 </template>
 
 <script>
-import VideoDetails from "./components/LatestVideo.vue";
-
 export default {
-  components: {
-    VideoDetails,
-  },
+  name: 'App'
 };
 </script>
 
 <style>
-
 *,
 *::before,
 *::after {
@@ -23,7 +18,6 @@ export default {
   padding: 0;
   box-sizing: border-box;
 }
-
 
 .big-title {
   display: flex;
