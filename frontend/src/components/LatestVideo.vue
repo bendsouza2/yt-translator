@@ -21,12 +21,11 @@
           :key="video.video_id"
           :class="['video-wrapper', {
             'current': index === currentIndex,
-            'prev': index === currentIndex + 1, // Older videos (higher index) appear left
-            'next': index === currentIndex - 1  // Newer videos (lower index) appear right
+            'prev': index === currentIndex + 1, 
+            'next': index === currentIndex - 1  
           }]"
         >
         <div class="video-content">
-            <!-- Added overlay div for non-current videos -->
             <div 
               v-if="index !== currentIndex" 
               class="video-overlay"
@@ -41,7 +40,6 @@
               allowfullscreen
             ></iframe>
 
-            <!-- Interactive elements only shown for current video -->
             <div 
               v-if="index === currentIndex" 
               class="interactive-elements"
@@ -200,7 +198,7 @@ onMounted(fetchVideos);
   width: 100%;
   transition: all 0.5s ease;
   opacity: 0;
-  transform: translateX(100%); /* Default position is off-screen to the right */
+  transform: translateX(100%); 
 }
 
 .video-wrapper.current {
@@ -211,19 +209,19 @@ onMounted(fetchVideos);
 
 .video-wrapper.prev {
   opacity: 0.2;
-  transform: translateX(-90%); /* Older videos appear to the left */
+  transform: translateX(-90%); 
   z-index: 1;
 }
 
 .video-wrapper.next {
   opacity: 0.2;
-  transform: translateX(90%); /* Newer videos appear to the right */
+  transform: translateX(90%); 
   z-index: 1;
 }
 
 .nav-button {
   position: absolute;
-  top: 280px; /* Centered with the video - adjusted from 50% */
+  top: 280px; 
   background: rgba(229, 160, 13, 0.8);
   border: none;
   color: white;
@@ -258,7 +256,7 @@ onMounted(fetchVideos);
 }
 
 .video-content {
-  position: relative; /* Added to contain the overlay */
+  position: relative; 
 }
 
 .video-overlay {
@@ -266,9 +264,9 @@ onMounted(fetchVideos);
   top: 0;
   left: 0;
   width: 100%;
-  height: 560px; /* Same as video height */
+  height: 560px; 
   background: transparent;
-  z-index: 10; /* Ensure it's above the iframe but below the navigation buttons */
+  z-index: 10; 
   cursor: default;
 }
 
@@ -281,11 +279,9 @@ onMounted(fetchVideos);
 }
 
 .top-content {
-  /* background: #333; */
   color: #ffffff;              
   padding: 20px;              
   margin-bottom: 20px;        
-  /* border-radius: 10px;  */
   text-align: center;         
   width: 100%;                
   box-sizing: border-box;     
