@@ -72,7 +72,15 @@ class VideoDetailsViewSet(viewsets.ModelViewSet):
         except paginator.PageNotAnInteger:
             return Response({"detail": "Page number must be an integer"}, status=400)
         except paginator.EmptyPage:
-            return Response({"detail": "Page number out of range"}, status=404)
+            return Response({
+                "videos": [],
+                "detail": "Page number out of range - it's likely that no older videos are available",
+                "total_videos": pages.count,
+                "total_pages": pages.num_pages,
+                "current_page": page_num,
+                "has_next": False,
+                "has_previous": False,
+            }, status=200)
 
         serializer = self.get_serializer(videos_page, many=True)
         return Response({
