@@ -1,6 +1,6 @@
 # YT-Translator
 
-![Build Status](https://github.com/bendsouza2/yt-translator/actions/workflows/python-unittest.yml/badge.svg)
+![Build Status](https://github.com/bendsouza2/yt-translator/actions/workflows/python-unittest.yml/badge.svg) ![Build Status](https://github.com/bendsouza2/yt-translator/actions/workflows/deploy_backend.yml/badge.svg)
 
 
 ## Project Overview
