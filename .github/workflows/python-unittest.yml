@@ -1,6 +1,6 @@
 # This workflow will install Python dependencies and run unit tests on Python 3.10
 
-name: Python application
+name: Unit Tests & MyPy
 
 on:
   push:

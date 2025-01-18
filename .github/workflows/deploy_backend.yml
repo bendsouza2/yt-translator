@@ -1,6 +1,7 @@
 name: Deploy to EC2
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -9,9 +10,34 @@ on:
 
 jobs:
   deploy:
+    name: Deploy to EC2
     runs-on: ubuntu-latest
+    env:
+      AWS_INSTANCE_SG_ID: ${{ secrets.AWS_INSTANCE_SG_ID }}
+      AWS_REGION: eu-west-2
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID}}
+      AWS_ROLE_NAME: ${{ secrets.AWS_ROLE_NAME}}
 
     steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::$AWS_ACCOUNT_ID:role/$AWS_ROLE_NAME
+        aws-region: $AWS_REGION
+
+    - name: Get runner public IP address
+      id: ip
+      uses: haythem/public-ip@v1.2
+
+    - name: Whitelist GitHub Actions runner IP address
+      run: |
+        echo "Adding runner IP address to security group..."
+        aws ec2 authorize-security-group-ingress \
+          --group-id $AWS_INSTANCE_SG_ID \
+          --protocol tcp \
+          --port 22 \
+          --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.7
       with:
@@ -21,3 +47,12 @@ jobs:
         script: |
           cd ~/yt_translator
           app/post_update.sh
+
+    - name: Revoke GitHub Actions runner IP address
+      run: |
+        echo "Removing runner IP address from security group..."
+        aws ec2 revoke-security-group-ingress \
+          --group-id $AWS_INSTANCE_SG_ID \
+          --protocol tcp \
+          --port 22 \
+          --cidr ${{ steps.ip.outputs.ipv4 }}/32
