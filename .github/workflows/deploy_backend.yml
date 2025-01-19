@@ -11,6 +11,9 @@ on:
 jobs:
   deploy:
     name: Deploy to EC2
+    permissions:
+      id-token: write
+      contents: read
     runs-on: ubuntu-latest
     env:
       AWS_INSTANCE_SG_ID: ${{ secrets.AWS_INSTANCE_SG_ID }}
@@ -24,6 +27,8 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_ROLE_NAME }}
         aws-region: ${{ env.AWS_REGION }}
+        role-session-name: GHActionsBackendDeployment
+        web-identity-token-file: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
 
     - name: Get runner public IP address
       id: ip
