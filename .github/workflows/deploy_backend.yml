@@ -51,7 +51,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd ~/yt_translator
-          app/post_update.sh
+          sudo app/post_update.sh
 
     - name: Revoke GitHub Actions runner IP address
       run: |
