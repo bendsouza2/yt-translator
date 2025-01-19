@@ -11,6 +11,9 @@ on:
 jobs:
   deploy:
     name: Deploy to EC2
+    permissions:
+      id-token: write
+      contents: read
     runs-on: ubuntu-latest
     env:
       AWS_INSTANCE_SG_ID: ${{ secrets.AWS_INSTANCE_SG_ID }}
@@ -22,8 +25,10 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        role-to-assume: arn:aws:iam::$AWS_ACCOUNT_ID:role/$AWS_ROLE_NAME
-        aws-region: $AWS_REGION
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_ROLE_NAME }}
+        aws-region: ${{ env.AWS_REGION }}
+        role-session-name: GHActionsBackendDeployment
+        web-identity-token-file: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
 
     - name: Get runner public IP address
       id: ip
@@ -46,7 +51,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd ~/yt_translator
-          app/post_update.sh
+          sudo app/post_update.sh
 
     - name: Revoke GitHub Actions runner IP address
       run: |
