@@ -1,4 +1,5 @@
-from typing import Callable, Type
+"""Module with custom logic for logging function/method calls - intended to be used with AWS CloudWatch"""
+from typing import Callable, Type, Any
 import logging
 from functools import wraps
 
@@ -8,13 +9,11 @@ logger.setLevel(logging.INFO)
 
 def get_logger(module_name: str) -> logging.Logger:
     """
-    Creates and configures a logger for the given module.
+    Creates and configures a logger for the given module. If the logger doesn't already have handlers,
+    a StreamHandler with a specific formatter is added.
 
-    Args:
-        module_name (str): Name of the module requesting the logger.
-
-    Returns:
-        logging.Logger: Configured logger instance.
+    :param module_name: Name of the module requesting the logger.
+    :returns: Configured logger instance.
     """
     logger = logging.getLogger(module_name)
     if not logger.hasHandlers():
@@ -28,8 +27,13 @@ def get_logger(module_name: str) -> logging.Logger:
     return logger
 
 
-def log_execution(func: Callable) -> Callable:
-    """Decorator to log the execution of a function or method."""
+def log_execution(func: Callable[..., Any]) -> Callable[..., Any]:
+    """
+    Higher-order function which can be used to log the execution of a function or method. Preserves the signature of the
+    wrapped function.
+    :param func: A function or method to wrap and log the call for
+    :returns: Wrapper function which wraps around the `func` passed as an argument
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
         logger.info(f"Entering: {func.__qualname__}")
@@ -39,8 +43,13 @@ def log_execution(func: Callable) -> Callable:
     return wrapper
 
 
-def log_all_methods(cls: Type):
-    """Class decorator to log all method calls in a class."""
+def log_all_methods(cls: Type[Any]) -> Type[Any]:
+    """
+    Class decorator to log all (static, class & instance) method calls in a class, as well as property getters and
+    setters.
+    :param cls: The class to wrap
+    :returns: The class with all methods and properties wrapped for logging.
+    """
     for attr_name, attr_value in cls.__dict__.items():
         if isinstance(attr_value, property):
             getter = log_execution(attr_value.fget) if attr_value.fget else None

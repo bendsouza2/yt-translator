@@ -1,3 +1,4 @@
+"""Module for 'today' application configuration"""
 from django.apps import AppConfig
 
 

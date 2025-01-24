@@ -1,3 +1,4 @@
+"""Module combining the logic from ../word_generator.py and ../yt_uploader.py to implement a video upload"""
 from typing import Dict, Callable, Optional
 from datetime import datetime
 
