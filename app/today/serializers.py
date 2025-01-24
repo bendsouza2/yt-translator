@@ -1,3 +1,4 @@
+"""Module for defining serializers in the 'today' app to (de)serialize the data passed in API requests/responses"""
 from rest_framework import serializers
 
 from today.models import Video

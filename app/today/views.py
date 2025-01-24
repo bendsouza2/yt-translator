@@ -1,3 +1,4 @@
+"""Module for defining API views in the 'today' app"""
 from typing import Optional
 
 from rest_framework.request import Request
