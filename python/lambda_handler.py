@@ -1,3 +1,4 @@
+"""Module for implementing the AWS Lambda logic"""
 import os
 import logging
 import traceback

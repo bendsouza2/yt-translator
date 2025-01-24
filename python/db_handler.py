@@ -1,3 +1,4 @@
+"""Module for establishing and handling MySQL DB connection"""
 import os
 from typing import Dict
 

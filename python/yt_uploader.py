@@ -40,13 +40,18 @@ class YTConnector:
 
     @property
     def credentials_env(self) -> None | Dict[str, str]:
-        """Gets the environment variable for YouTube API credentials"""
+        """
+        Gets the environment variable for YouTube API credentials
+        :return: A dictionary containing the YouTube API credentials if available, or None if not set.
+        """
         return self._credentials_env
 
     @credentials_env.setter
     def credentials_env(self, credentials_env):
         """
         Set the self.credentials_env attribute
+        :param credentials_env: A flag indicating whether to set the credentials. If False, sets the attribute to None.
+        Otherwise, loads the credentials from the env variable
         """
         if credentials_env is False:
             self._credentials_env = None
