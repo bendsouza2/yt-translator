@@ -29,9 +29,8 @@ RUN yum update -y && \
 RUN fc-cache -f -v
 RUN fc-list | grep LiberationSans
 
-RUN mkdir -p /usr/share/hunspell && \
-    curl -o /usr/share/hunspell/es_ES.dic https://cgit.freedesktop.org/libreoffice/dictionaries/plain/es/es_ES.dic && \
-    curl -o /usr/share/hunspell/es_ES.aff https://cgit.freedesktop.org/libreoffice/dictionaries/plain/es/es_ES.aff
+RUN mkdir -p /usr/share/hunspell
+COPY python/dictionaries/. /usr/share/hunspell/
 
 ENV ENCHANT_CONFIG_DIR=/usr/share/hunspell
 ENV ENCHANT_DATA_DIR=/usr/share/hunspell
