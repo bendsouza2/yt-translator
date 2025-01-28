@@ -66,8 +66,8 @@ To customise the project and deploy the video creation capabilities, complete th
 ## Potential Problems (Video Generation)
 Some problems I encountered in setup or that you might encounter if working with the project for the first time:
 
-* I'm using enchant to verify that the 'word of the day' is real. The dockerfile handles the install of enchant, but if you're working with a new language, the dictionary for that language may not be pre-installed. You can find a list of [available language dictionaries here.](https://cgit.freedesktop.org/libreoffice/dictionaries/tree/) If you need to install a new dictionary, just add a line to the docker file:
-   - `curl -o <LINK_TO_DICT_FILE>`
+* I'm using enchant to verify that the 'word of the day' is real. The dockerfile handles the install of enchant, but if you're working with a new language, the dictionary for that language may not be pre-installed. You can find a list of [available language dictionaries here.](https://cgit.freedesktop.org/libreoffice/dictionaries/tree/) If you need to install a new dictionary, just run the below command, and once downloaded rebuild the docker image:
+   - `curl -o python/dictionaries/<DICT_NAME> <LINK_TO_DICT_FILE>`
 
 
 ## Backend Setup
