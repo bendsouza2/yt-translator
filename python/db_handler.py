@@ -1,57 +1,34 @@
 """Module for establishing and handling MySQL DB connection"""
 import os
+import requests
 from typing import Dict
 
 import MySQLdb
+import dotenv
+
+from python import utils
+
+dotenv.load_dotenv()
 
 
-def write_to_db(video_details: Dict[str, str]) -> None:
+def write_to_db(video_details: Dict[str, str]) -> requests.Response:
     """
-    Writes video metadata to a MySQL database using mysqlclient (MySQLdb).
+    Writes video metadata to a MySQL database by calling an API endpoint, which writes the data to the DB.
     :param video_details: Dictionary containing the data to write to the DB
     """
-    connection = None
-    try:
-        connection = MySQLdb.connect(
-            host=os.getenv("DB_HOST"),
-            user=os.getenv("DB_USER"),
-            passwd=os.getenv("DB_PASSWORD"),
-            db=os.getenv("DB_NAME"),
-        )
-        cursor = connection.cursor()
 
-        sql_query = """
-        INSERT INTO videos (video_id, word, sentence, translated_sentence, title, description, upload_time, thumbnail_url)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            word = VALUES(word),
-            sentence = VALUES(sentence),
-            translated_sentence = VALUES(translated_sentence),
-            title = VALUES(title),
-            description = VALUES(description),
-            upload_time = VALUES(upload_time),
-            thumbnail_url = VALUES(thumbnail_url);
-        """
-        cursor.execute(
-            sql_query,
-            (
-                video_details["video_id"],
-                video_details["word"],
-                video_details["sentence"],
-                video_details["translated_sentence"],
-                video_details["title"],
-                video_details["description"],
-                video_details["upload_time"],
-                video_details["thumbnail_url"],
-            ),
-        )
+    base_url = os.getenv('API_BASE_URL')
+    base_url = utils.remove_trailing_slash(base_url)
+    api_url = f"{base_url}/today/videos/write-to-db/"
+    api_key = os.getenv("EXPECTED_API_KEY")
 
-        connection.commit()
+    headers = {
+        "Content-Type": "application/json",
+        "X-API-KEY": api_key,
+    }
 
-    except MySQLdb.Error as e:
-        print(f"Error while interacting with the database: {e}")
-        raise
+    response = requests.post(api_url, json=video_details, headers=headers)
+    response.raise_for_status()
 
-    finally:
-        if connection is not None:
-            connection.close()
+    return response
+

@@ -23,12 +23,15 @@ def spanish_syllable_count(word: str) -> int:
 
 def remove_trailing_slash(string_to_check: str) -> str:
     """
-    Remove forward slash at the end of a string
+    Recursively remove forward slashes at the end of a string
     :param string_to_check: The string to remove the forward slash from
     :return: The string with the forward slash removed
     """
-    if string_to_check.endswith("/"):
+    if not isinstance(string_to_check, str):
+        raise TypeError(f"Expected type str, got {type(string_to_check)} instead")
+    if len(string_to_check) > 0 and string_to_check.endswith("/"):
         string_to_check = string_to_check[: -1]
+        string_to_check = remove_trailing_slash(string_to_check)
     return string_to_check
 
 
