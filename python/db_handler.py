@@ -18,6 +18,8 @@ def write_to_db(video_details: Dict[str, str]) -> requests.Response:
     """
 
     base_url = os.getenv('API_BASE_URL')
+    if base_url is None:
+        raise ValueError("No 'API_BASE_URL' env variable could be found")
     base_url = utils.remove_trailing_slash(base_url)
     api_url = f"{base_url}/today/videos/write-to-db/"
     api_key = os.getenv("EXPECTED_API_KEY")
