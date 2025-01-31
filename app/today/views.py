@@ -3,7 +3,7 @@ from typing import Optional
 
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import dateparse
@@ -11,6 +11,7 @@ from django.core import paginator
 
 from today.models import Video
 from today.serializers import VideoDetailsSerializer
+from video_host.permissions import HasValidApiKey
 
 
 class VideoDetailsViewSet(viewsets.ModelViewSet):
@@ -92,3 +93,32 @@ class VideoDetailsViewSet(viewsets.ModelViewSet):
             "has_next": videos_page.has_next(),
             "has_previous": videos_page.has_previous(),
         })
+
+    @action(detail=False, methods=["post"], url_path="write-to-db", permission_classes=[HasValidApiKey])
+    def write_video_metadata(self, request: Request):
+        """
+        Verify the user has permission to write data to the DB, then write the video metadata to the MySQL RDS instance.
+
+        This method checks if the incoming request contains valid video metadata. If valid, it either creates a new
+        video record or updates an existing one in the database.
+
+        :param request: The HTTP request containing a JSON with the video metadata to write to the DB.
+        The JSON should include required fields such as 'video_id' and other relevant data.
+        :return: A JSON response with a message indicating the status of the request to write to the DB.
+        The response contains a success message and the appropriate HTTP status code based on the result:
+                 - HTTP 201 CREATED if a new record was created.
+                 - HTTP 200 OK if an existing record was updated.
+                 - HTTP 400 BAD REQUEST if the data is invalid.
+        """
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            video, created = Video.objects.update_or_create(
+                video_id=serializer.validated_data["video_id"],
+                defaults=serializer.validated_data
+            )
+            status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+            return Response(
+                {"message": f"{'Created' if created is True else 'Updated'} video record."},
+                status=status_code,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
