@@ -4,7 +4,7 @@
       :is-spanish="isSpanish"
       :translations="translations"
       :current-video="currentVideo"
-      @toggle-language="toggleLanguage"
+      @toggle-language="toggleLang" 
     />
     <VideoCarousel
       :videos="videos"
@@ -64,7 +64,7 @@ const translations = {
 };
 
 const { fetchVideos } = useVideoManager(videos, loading, flippedStates, revealedStates);
-const { toggleLanguage, translateDate } = useLanguageTranslation(isSpanish);
+const { toggleLanguage, translateDate } = useLanguageTranslation();
 
 const currentVideo = computed(() => {
   return videos.value[currentIndex.value] || {};
@@ -91,6 +91,10 @@ function revealSentence(index, sentenceName) {
     revealedStates.value[index] = {};
   }
   revealedStates.value[index][sentenceName] = !revealedStates.value[index][sentenceName];
+}
+
+function toggleLang() {
+  toggleLanguage(isSpanish); 
 }
 
 onMounted(fetchVideos);

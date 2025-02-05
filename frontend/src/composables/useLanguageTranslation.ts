@@ -1,4 +1,3 @@
-// composables/useLanguageTranslation.ts
 import { Ref } from 'vue';
 
 interface LanguageMap {
@@ -10,7 +9,7 @@ interface LanguageMap {
   };
 }
 
-export function useLanguageTranslation(isSpanish?: Ref<boolean>) {
+export function useLanguageTranslation() {
   const languageMap: LanguageMap = {
     days: {
       en: {
@@ -41,14 +40,12 @@ export function useLanguageTranslation(isSpanish?: Ref<boolean>) {
     }
   };
 
-  function toggleLanguage() {
-    if (isSpanish && isSpanish.value !== undefined) {
-      isSpanish.value = !isSpanish.value;
-    }
+  function toggleLanguage(isSpanish: Ref<boolean>) {
+    isSpanish.value = !isSpanish.value;
   }
 
-  function translateDate(date: string): string {
-    if (!isSpanish?.value) return date;
+  function translateDate(date: string, isSpanish: boolean): string { 
+    if (!isSpanish) return date; 
 
     const parts = date.split(' ');
     const day = parts[0];

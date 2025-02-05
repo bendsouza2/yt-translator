@@ -1,4 +1,3 @@
-// composables/useVideoManager.ts
 import axios from 'axios';
 import { Ref } from 'vue';
 

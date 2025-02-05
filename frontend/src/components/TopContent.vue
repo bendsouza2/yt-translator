@@ -8,15 +8,15 @@
       </button>
       <h1>{{ isSpanish ? translations.title.es : translations.title.en }}</h1>
       <h2 v-if="currentVideo.upload_time">
-        {{ translateDate(currentVideo.upload_time) }}
+        {{ translatedDate }}
       </h2>
     </div>
 </template>
     
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, computed } from 'vue';
 import { useLanguageTranslation } from '../composables/useLanguageTranslation';
-    
+
 const props = defineProps({
     isSpanish: Boolean,
     translations: Object,
@@ -25,10 +25,17 @@ const props = defineProps({
         default: () => ({})
     }
 });
-    
-const emit = defineEmits(['toggle-language']);    
-const { translateDate } = useLanguageTranslation(props.isSpanish);
 
+const emit = defineEmits(['toggle-language']);
+
+const { translateDate } = useLanguageTranslation(); 
+
+const translatedDate = computed(() => {
+  if (props.currentVideo.upload_time) {
+    return translateDate(props.currentVideo.upload_time, props.isSpanish); 
+  }
+  return '';
+});
 </script>
 
 <style>

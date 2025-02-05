@@ -1,4 +1,3 @@
-<!-- components/VideoCarousel.vue -->
 <template>
     <div class="carousel-container">
       <button 
@@ -93,27 +92,27 @@
         ›
       </button>
     </div>
-  </template>
+</template>
   
-  <script setup>
-  import { defineProps, defineEmits } from 'vue';
+<script setup>
+import { defineProps, defineEmits } from 'vue';
   
-  const props = defineProps({
+const props = defineProps({
     videos: Array,
     currentIndex: Number,
     isSpanish: Boolean,
     translations: Object,
     flippedStates: Object,
     revealedStates: Object
-  });
+});
   
-  const emit = defineEmits([
+const emit = defineEmits([
     'next-video', 
     'previous-video', 
     'flip-button', 
     'reveal-sentence'
-  ]);
-  </script>
+]);
+</script>
 
 <style>
 .carousel-container {
