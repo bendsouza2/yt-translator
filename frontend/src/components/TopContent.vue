@@ -1,74 +1,35 @@
 <template>
     <div class="top-content">
-      <button @click="$emit('toggle-language')" class="language-switch-btn">
+      <button
+        @click="$emit('toggle-language')"
+        class="language-switch-btn"
+      >
         {{ isSpanish ? translations.switchLanguage.es : translations.switchLanguage.en }}
       </button>
-  
       <h1>{{ isSpanish ? translations.title.es : translations.title.en }}</h1>
-  
-      <!-- Render date if available -->
-      <h2 v-if="currentVideo?.upload_time">
+      <h2 v-if="currentVideo.upload_time">
         {{ translateDate(currentVideo.upload_time) }}
       </h2>
     </div>
-  </template>
-  
-  <script setup>
-  import { computed } from "vue";
-  
-  defineProps({
+</template>
+    
+<script setup>
+import { defineProps, defineEmits } from 'vue';
+import { useLanguageTranslation } from '../composables/useLanguageTranslation';
+    
+const props = defineProps({
     isSpanish: Boolean,
     translations: Object,
-    currentVideo: Object,
-  });
-  
-  defineEmits(["toggle-language"]);
-  
-  const translateDate = (date) => {
-    // Ensure date formatting logic is consistent
-    if (!isSpanish) return date;
-    const parts = date.split(' ');
-    const day = parts[0];
-    const dayNumber = parts[1].replace(/\D/g, '');
-    const month = parts[parts.length - 2];
-    const year = parts[parts.length - 1];
-  
-    const languageMap = {
-      days: {
-        en: {
-          Monday: "lunes",
-          Tuesday: "martes",
-          Wednesday: "miércoles",
-          Thursday: "jueves",
-          Friday: "viernes",
-          Saturday: "sábado",
-          Sunday: "domingo",
-        },
-      },
-      months: {
-        en: {
-          January: "enero",
-          February: "febrero",
-          March: "marzo",
-          April: "abril",
-          May: "mayo",
-          June: "junio",
-          July: "julio",
-          August: "agosto",
-          September: "septiembre",
-          October: "octubre",
-          November: "noviembre",
-          December: "diciembre",
-        },
-      },
-    };
-  
-    const translatedDay = languageMap.days.en[day] || day;
-    const translatedMonth = languageMap.months.en[month] || month;
-  
-    return `${translatedDay} ${dayNumber} ${translatedMonth} ${year}`;
-  };
-  </script>
+    currentVideo: {
+        type: Object,
+        default: () => ({})
+    }
+});
+    
+const emit = defineEmits(['toggle-language']);    
+const { translateDate } = useLanguageTranslation(props.isSpanish);
+
+</script>
 
 <style>
 .top-content {
