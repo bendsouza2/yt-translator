@@ -73,14 +73,17 @@ const currentVideo = computed(() => {
 function nextVideo() {
   if (currentIndex.value > 0) {
     currentIndex.value--;
+  } else if (currentIndex.value === 0) {
+    currentIndex.value = videos.value.length; // Move to timer index
   }
 }
 
 function previousVideo() {
-  if (currentIndex.value < videos.value.length - 1) {
+  if (currentIndex.value <= videos.value.length) {
     currentIndex.value++;
   }
 }
+
 
 function flipButton(index) {
   flippedStates.value[index] = !flippedStates.value[index];
