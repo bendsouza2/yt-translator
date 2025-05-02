@@ -4,7 +4,9 @@
 
 
 ## Project Overview
-This project aims to provide free and accessible language learning resources in the form of video content created leveraging LLMs. There are three main components to this project:
+NOTE: This project is no longer being maintained, so the website has been taken down (gotta save on those AWS server costs). However, following the developer guide below allows the core functionality to be easily replicated.
+
+The project aims to provide free and accessible language learning resources in the form of video content created leveraging LLMs. There are three main components to this project:
 
 1. [Video creation]((https://www.youtube.com/channel/UCQjyvCIR9IkG02Q0Wmpz9sQ))
 2. Web backend
@@ -136,4 +138,6 @@ yt_translator/
 │   ├── webpack.config.js
 
 
+## Frontend
+![Web frontend before it was taken down](https://github.com/user-attachments/assets/e6fd7fa1-79cf-407a-aafd-88a947ae85a2)
 
