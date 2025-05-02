@@ -136,7 +136,7 @@ yt_translator/
 │   ├── src/
 │   ├── package.json
 │   ├── webpack.config.js
-
+```
 
 ## Frontend
 ![Web frontend before it was taken down](https://github.com/user-attachments/assets/e6fd7fa1-79cf-407a-aafd-88a947ae85a2)
