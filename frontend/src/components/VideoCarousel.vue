@@ -1,117 +1,86 @@
 <template>
-    <div class="carousel-container">
-      <button 
-        class="nav-button prev" 
-        @click="$emit('previous-video')" 
-        :disabled="currentIndex === videos.length - 1"
-        v-show="currentIndex < videos.length - 1"
+  <div class="carousel-container">
+    <!-- Left Navigation Button -->
+    <button
+      class="nav-button prev"
+      @click="handlePreviousClick"
+      :disabled="currentIndex === videos.length"
+      v-show="currentIndex < videos.length"
+    >
+      ‹
+    </button>
+
+    <!-- Video or Timer Display -->
+    <div class="videos-container" ref="videosContainer">
+      <div
+        v-for="(video, index) in videos"
+        :key="video.video_id"
+        :class="[
+          'video-wrapper',
+          { 'current': index === currentIndex, 'prev': index === currentIndex + 1, 'next': index === currentIndex - 1 }
+        ]"
       >
-        ‹
-      </button>
-  
-      <div class="videos-container" ref="videosContainer">
-        <div 
-          v-for="(video, index) in videos" 
-          :key="video.video_id"
-          :class="['video-wrapper', {
-            'current': index === currentIndex,
-            'prev': index === currentIndex + 1, 
-            'next': index === currentIndex - 1  
-          }]"
-        >
-          <div class="video-content">
-            <div 
-              v-if="index !== currentIndex" 
-              class="video-overlay"
-              aria-hidden="true"
-            ></div>
-            
-            <iframe
-              :src="`https://www.youtube.com/embed/${video.video_id}?rel=0`"
-              width="315"
-              height="560"
-              frameborder="0"
-              allowfullscreen
-            ></iframe>
-  
-            <div 
-              v-if="index === currentIndex" 
-              class="interactive-elements"
-            >
-              <div 
-                :class="['flip-button', { flipped: flippedStates[index] }]" 
-                @click="$emit('flip-button', index)"
-              >
-                <div class="front">
-                  {{ isSpanish ? translations.flipButton.es : translations.flipButton.en }}
-                </div>
-                <div class="back">{{ video.word }}</div>
-              </div>
-  
-              <div class="sentence-container">
-                <div class="sentence-title">
-                  <strong>
-                    {{ isSpanish ? translations.exampleUsage.es : translations.exampleUsage.en }}
-                  </strong>
-                </div>
-                <div 
-                  :class="['sentence spanish-sentence', { hovered: revealedStates[index]?.sentenceSpanish }]"
-                  @click="$emit('reveal-sentence', index, 'sentenceSpanish')"
-                >
-                  <div v-if="!revealedStates[index]?.sentenceSpanish" class="front">
-                    {{ isSpanish ? translations.seeSentence.es : translations.seeSentence.en }}
-                  </div>
-                  <div v-if="revealedStates[index]?.sentenceSpanish" class="back">
-                    {{ video.sentence }}
-                  </div>
-                </div>
-  
-                <div
-                  :class="['sentence english-sentence', { hovered: revealedStates[index]?.sentenceEnglish }]"
-                  @click="$emit('reveal-sentence', index, 'sentenceEnglish')"
-                >
-                  <div v-if="!revealedStates[index]?.sentenceEnglish" class="front">
-                    {{ isSpanish ? translations.revealTranslation.es : translations.revealTranslation.en }}
-                  </div>
-                  <div v-if="revealedStates[index]?.sentenceEnglish" class="back">
-                    {{ video.translated_sentence }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="video-content" v-if="index !== timerIndex">
+          <iframe
+            :src="`https://www.youtube.com/embed/${video.video_id}?rel=0`"
+            width="315"
+            height="560"
+            frameborder="0"
+            allowfullscreen
+          ></iframe>
         </div>
       </div>
-  
-      <button 
-        class="nav-button next" 
-        @click="$emit('next-video')" 
-        :disabled="currentIndex === 0"
-        v-show="currentIndex > 0"
-      >
-        ›
-      </button>
+
+      <!-- Timer Component -->
+      <UploadTimer
+        v-if="currentIndex === timerIndex"
+        :is-spanish="isSpanish"
+        @timer-complete="handleTimerComplete"
+        class="timer-container"
+      />
     </div>
+
+    <!-- Right Navigation Button -->
+    <button
+      class="nav-button next"
+      @click="handleNextClick"
+      :disabled="currentIndex === timerIndex"
+      v-show="currentIndex <= timerIndex"
+    >
+      ›
+    </button>
+  </div>
 </template>
-  
+
 <script setup>
-import { defineProps, defineEmits } from 'vue';
-  
+import { ref, computed } from "vue";
+import UploadTimer from "./UploadTimer.vue";
+
 const props = defineProps({
-    videos: Array,
-    currentIndex: Number,
-    isSpanish: Boolean,
-    translations: Object,
-    flippedStates: Object,
-    revealedStates: Object
+  videos: Array,
+  currentIndex: Number,
+  isSpanish: Boolean,
 });
-  
-const emit = defineEmits([
-    'next-video', 
-    'previous-video', 
-    'flip-button', 
-    'reveal-sentence'
-]);
+
+const emit = defineEmits(["next-video", "previous-video"]);
+
+const timerIndex = computed(() => props.videos.length); // Timer is treated as an additional index
+
+function handleNextClick() {
+  if (props.currentIndex < timerIndex.value) {
+    emit("next-video");
+  }
+}
+
+function handlePreviousClick() {
+  if (props.currentIndex > 0) {
+    emit("previous-video");
+  }
+}
+
+function handleTimerComplete() {
+  // Optionally handle when the timer completes
+}
 </script>
 
 <style>
